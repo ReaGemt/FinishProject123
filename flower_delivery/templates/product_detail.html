@@ -1,21 +1,64 @@
 <!-- templates/product_detail.html -->
 {% extends 'base.html' %}
-{% load static %}
+
 {% block content %}
-<h2>{{ product.name }}</h2>
-<img src="{{ product.image.url }}" alt="{{ product.name }}">
-<p>{{ product.description }}</p>
-<p>Price: {{ product.price }} USD</p>
-<a href="{% url 'add_to_cart' product.id %}" class="btn btn-success">Add to Cart</a>
+<div class="container mt-5">
+    <div class="row">
+        <!-- Левый блок с изображениями -->
+        <div class="col-md-6">
+            <div id="mainImage" class="mb-3">
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-fluid">
+            </div>
+            <div id="thumbnails" class="d-flex">
+                {% for image in product.images.all %}
+                    <div class="thumbnail me-2">
+                        <img src="{{ image.url }}" alt="{{ product.name }}" class="img-thumbnail">
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
 
-<h3>Reviews</h3>
-<ul>
-    {% for review in product.review_set.all %}
-    <li>
-        <strong>{{ review.user.username }}:</strong> {{ review.comment }} ({{ review.rating }}/5)
-    </li>
-    {% endfor %}
-</ul>
+        <!-- Правый блок с информацией о продукте -->
+        <div class="col-md-6">
+            <h2>{{ product.name }}</h2>
+            <p class="text-muted">Наличие подтверждено сегодня</p>
+            <div class="rating mb-3">
+                <span class="badge bg-warning text-dark">★★★★☆</span>
+                <span>{{ product.rating }} оценок</span>
+            </div>
+            <h3 class="text-primary">{{ product.price }} руб.</h3>
+            <div class="d-flex align-items-center mb-4">
+                <label for="quantity" class="me-3">Количество:</label>
+                <input type="number" id="quantity" name="quantity" value="1" min="1" class="form-control w-auto">
+            </div>
+            <button class="btn btn-primary btn-lg w-100 mb-3">Добавить в корзину</button>
+            <button class="btn btn-outline-secondary btn-lg w-100">Купить сейчас</button>
 
-<a href="{% url 'add_review' product.id %}" class="btn btn-primary">Add a Review</a>
+            <hr>
+            <div>
+                <h4>Состав:</h4>
+                <ul>
+                    <li>Лента - 1 шт.</li>
+                    <li>Подарочная коробка - 1 шт.</li>
+                    <li>Сухоцветы - 1 шт.</li>
+                    <li>Бумага тишью - 3 шт.</li>
+                    <!-- Добавьте другие детали -->
+                </ul>
+            </div>
+
+            <hr>
+            <div>
+                <h4>Размеры:</h4>
+                <p>Ширина: 30 см</p>
+                <p>Высота: 30 см</p>
+            </div>
+
+            <hr>
+            <div>
+                <h4>Описание:</h4>
+                <p>Наши цветы не вянут!</p>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

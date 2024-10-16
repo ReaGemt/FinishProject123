@@ -53,3 +53,45 @@ footer {
     background-color: #343a40;
     color: white;
 }
+/* Стили для страницы продукта */
+#mainImage {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#thumbnails .thumbnail {
+    width: 60px;
+    height: 60px;
+    cursor: pointer;
+}
+
+.thumbnail img {
+    width: 100%;
+    height: auto;
+}
+
+.rating {
+    display: flex;
+    align-items: center;
+}
+
+.rating .badge {
+    font-size: 1.25rem;
+    margin-right: 0.5rem;
+}
+
+/* Стили для кнопок */
+.btn-primary {
+    background-color: #ff4d4d;
+    border-color: #ff4d4d;
+}
+
+.btn-outline-secondary {
+    color: #333;
+    border-color: #ddd;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #f8f9fa;
+}
