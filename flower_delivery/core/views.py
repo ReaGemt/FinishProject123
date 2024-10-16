@@ -76,3 +76,11 @@ def profile(request):
     # Получаем заказы текущего пользователя
     orders = Order.objects.filter(user=request.user)
     return render(request, 'profile.html', {'orders': orders})
+
+# Добавляем представление для страницы "О нас"
+def about(request):
+    return render(request, 'about.html')
+
+# Добавляем представление для страницы "Контакты"
+def contact(request):
+    return render(request, 'contact.html')

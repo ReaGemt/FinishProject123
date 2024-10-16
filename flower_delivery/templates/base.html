@@ -10,25 +10,32 @@
     <title>Доставка Цветов</title>
 </head>
 <body>
-    <header class="bg-dark text-white py-3">
+    <header class="bg-light border-bottom">
         <div class="container">
-            <h1 class="h3">Доставка Цветов</h1>
-            <nav class="nav">
-                <a class="nav-link text-white" href="{% url 'catalog' %}">Каталог</a>
-                <a class="nav-link text-white" href="{% url 'view_cart' %}">Корзина</a>
-                <a class="nav-link text-white" href="{% url 'profile' %}">Личный кабинет</a>
-                <a class="nav-link text-white" href="{% url 'about' %}">О нас</a>
-                <a class="nav-link text-white" href="{% url 'contact' %}">Контакты</a>
-                {% if user.is_authenticated %}
-                    <form method="post" action="{% url 'logout' %}" style="display: inline;">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-link text-white" style="padding: 0; border: none; background: none;">Выйти</button>
-                    </form>
-                {% else %}
-                    <a class="nav-link text-white" href="{% url 'login' %}">Войти</a>
-                    <a class="nav-link text-white" href="{% url 'register' %}">Регистрация</a>
-                {% endif %}
-            </nav>
+            <div class="row align-items-center py-3">
+                <div class="col">
+                    <a href="/" class="navbar-brand">
+                        <img src="{% static 'images/logo.png' %}" alt="Логотип" width="150">
+                    </a>
+                </div>
+                <div class="col text-end">
+                    <nav class="nav">
+                        <a class="nav-link" href="{% url 'catalog' %}">Каталог</a>
+                        <a class="nav-link" href="{% url 'about' %}">О нас</a>
+                        <a class="nav-link" href="{% url 'contact' %}">Контакты</a>
+                        {% if user.is_authenticated %}
+                            <a class="nav-link" href="{% url 'profile' %}">Личный кабинет</a>
+                            <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-link" style="padding: 0; border: none; background: none;">Выйти</button>
+                            </form>
+                        {% else %}
+                            <a class="nav-link" href="{% url 'login' %}">Войти</a>
+                            <a class="nav-link" href="{% url 'register' %}">Регистрация</a>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
         </div>
     </header>
 
@@ -37,7 +44,7 @@
         {% endblock %}
     </main>
 
-    <footer class="bg-dark text-white text-center py-3">
+    <footer class="bg-light text-center py-3 border-top">
         <p>&copy; 2024 Доставка Цветов</p>
     </footer>
 
