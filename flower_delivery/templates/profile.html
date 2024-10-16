@@ -1,0 +1,45 @@
+<!-- templates/profile.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h2 class="mb-4">Личный кабинет</h2>
+        <p><strong>Имя пользователя:</strong> {{ user.username }}</p>
+        <p><strong>Электронная почта:</strong> {{ user.email }}</p>
+        <a href="{% url 'password_change' %}" class="btn btn-secondary w-100 mb-4">Изменить пароль</a>
+    </div>
+</div>
+
+<hr>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h2 class="mb-4">История заказов</h2>
+        {% if orders %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Номер заказа</th>
+                            <th>Дата заказа</th>
+                            <th>Общая сумма</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td>{{ order.id }}</td>
+                            <td>{{ order.created_at }}</td>
+                            <td>{{ order.total_price }} руб.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p>У вас еще нет заказов.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+<!-- templates/order_success.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="text-center">
+    <h2 class="mb-4">Заказ успешно оформлен</h2>
+    <p>Ваш заказ успешно принят. Спасибо, что выбрали нас!</p>
+    <a href="{% url 'catalog' %}" class="btn btn-primary">Вернуться к каталогу</a>
+</div>
+{% endblock %}

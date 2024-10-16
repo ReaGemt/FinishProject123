@@ -1,0 +1,28 @@
+<!-- templates/cart.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<h2 class="mb-4">Ваша корзина</h2>
+<div class="table-responsive">
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Товар</th>
+                <th scope="col">Количество</th>
+                <th scope="col">Цена</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in cart.cartitem_set.all %}
+            <tr>
+                <td>{{ item.product.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.product.price }} руб.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<p>Итого: <strong>{{ cart.get_total }} руб.</strong></p>
+<a href="{% url 'checkout' %}" class="btn btn-success">Оформить заказ</a>
+{% endblock %}

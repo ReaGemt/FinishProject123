@@ -1,0 +1,14 @@
+<!-- templates/checkout.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<h2>Checkout</h2>
+<form method="post">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="address">Delivery Address</label>
+        <input type="text" name="address" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Place Order</button>
+</form>
+{% endblock %}

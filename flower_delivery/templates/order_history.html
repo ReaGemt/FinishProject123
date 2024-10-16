@@ -1,0 +1,18 @@
+<!-- templates/order_history.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<h2>Order History</h2>
+<ul>
+    {% for order in orders %}
+    <li>
+        Order #{{ order.id }} - {{ order.created_at }} - Total: {{ order.total_price }} USD
+        <ul>
+            {% for item in order.orderitem_set.all %}
+            <li>{{ item.product.name }} - {{ item.quantity }} pcs</li>
+            {% endfor %}
+        </ul>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}
