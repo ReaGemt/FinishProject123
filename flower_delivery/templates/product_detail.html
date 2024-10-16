@@ -1,64 +1,43 @@
-<!-- templates/product_detail.html -->
 {% extends 'base.html' %}
-
+{% block title %}{{ product.name }}{% endblock %}
+{% load static %}
 {% block content %}
-<div class="container mt-5">
-    <div class="row">
-        <!-- Левый блок с изображениями -->
-        <div class="col-md-6">
-            <div id="mainImage" class="mb-3">
-                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-fluid">
-            </div>
-            <div id="thumbnails" class="d-flex">
-                {% for image in product.images.all %}
-                    <div class="thumbnail me-2">
-                        <img src="{{ image.url }}" alt="{{ product.name }}" class="img-thumbnail">
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- Правый блок с информацией о продукте -->
-        <div class="col-md-6">
-            <h2>{{ product.name }}</h2>
-            <p class="text-muted">Наличие подтверждено сегодня</p>
-            <div class="rating mb-3">
-                <span class="badge bg-warning text-dark">★★★★☆</span>
-                <span>{{ product.rating }} оценок</span>
-            </div>
-            <h3 class="text-primary">{{ product.price }} руб.</h3>
-            <div class="d-flex align-items-center mb-4">
-                <label for="quantity" class="me-3">Количество:</label>
-                <input type="number" id="quantity" name="quantity" value="1" min="1" class="form-control w-auto">
-            </div>
-            <button class="btn btn-primary btn-lg w-100 mb-3">Добавить в корзину</button>
-            <button class="btn btn-outline-secondary btn-lg w-100">Купить сейчас</button>
-
-            <hr>
-            <div>
-                <h4>Состав:</h4>
-                <ul>
-                    <li>Лента - 1 шт.</li>
-                    <li>Подарочная коробка - 1 шт.</li>
-                    <li>Сухоцветы - 1 шт.</li>
-                    <li>Бумага тишью - 3 шт.</li>
-                    <!-- Добавьте другие детали -->
-                </ul>
-            </div>
-
-            <hr>
-            <div>
-                <h4>Размеры:</h4>
-                <p>Ширина: 30 см</p>
-                <p>Высота: 30 см</p>
-            </div>
-
-            <hr>
-            <div>
-                <h4>Описание:</h4>
-                <p>Наши цветы не вянут! Данная композиция будет радовать вас от 1 года. В основе идут стабилизированные цветы...</p>
-            </div>
-        </div>
+<div class="row">
+    <div class="col-md-6">
+        {% if product.image %}
+            <img src="{{ product.image.url }}" class="img-fluid" alt="{{ product.name }}">
+        {% else %}
+            <img src="{% static 'images/placeholder.png' %}" class="img-fluid" alt="Нет изображения">
+        {% endif %}
+    </div>
+    <div class="col-md-6">
+        <h2>{{ product.name }}</h2>
+        <p>{{ product.description }}</p>
+        <p><strong>Цена: {{ product.price }} ₽</strong></p>
+        <form method="POST" action="{% url 'add_to_cart' product.id %}">
+            {% csrf_token %}
+            <label for="quantity">Количество:</label>
+            <input type="number" name="quantity" value="1" min="1" class="form-control mb-3" style="width: 100px;">
+            <button type="submit" class="btn btn-success">Добавить в корзину</button>
+        </form>
     </div>
 </div>
+
+<hr>
+
+<h3>Отзывы</h3>
+{% if product.review_set.count %}
+    <ul class="list-group">
+        {% for review in product.review_set.all %}
+        <li class="list-group-item">
+            <p>{{ review.review_text }}</p>
+            <small>Рейтинг: {{ review.rating }}/5</small>
+        </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>Отзывов пока нет.</p>
+{% endif %}
+
+<a href="{% url 'add_review' product.id %}" class="btn btn-primary mt-4">Добавить отзыв</a>
 {% endblock %}

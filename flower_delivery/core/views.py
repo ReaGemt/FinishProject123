@@ -5,8 +5,6 @@ from django.contrib import messages
 from django.contrib.auth import login
 from .forms import UserRegisterForm
 
-
-
 def product_list(request):
     products = Product.objects.all()
     return render(request, 'catalog.html', {'products': products})
@@ -15,8 +13,9 @@ def product_list(request):
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     cart, created = Cart.objects.get_or_create(user=request.user)
+    quantity = int(request.POST.get('quantity', 1))  # Получаем значение количества из формы
     cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
-    cart_item.quantity += 1
+    cart_item.quantity += quantity  # Увеличиваем количество товаров в корзине на указанное
     cart_item.save()
     return redirect('view_cart')
 
@@ -73,14 +72,11 @@ def register(request):
 
 @login_required
 def profile(request):
-    # Получаем заказы текущего пользователя
     orders = Order.objects.filter(user=request.user)
     return render(request, 'profile.html', {'orders': orders})
 
-# Добавляем представление для страницы "О нас"
 def about(request):
     return render(request, 'about.html')
 
-# Добавляем представление для страницы "Контакты"
 def contact(request):
     return render(request, 'contact.html')

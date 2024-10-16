@@ -1,20 +1,27 @@
-<!-- templates/catalog.html -->
 {% extends 'base.html' %}
-
+{% block title %}Каталог товаров{% endblock %}
+{% load static %}
 {% block content %}
-<h2 class="mb-4">Каталог цветов</h2>
-<div class="row">
-    {% for product in products %}
-    <div class="col-md-4 mb-4">
-        <div class="card h-100">
-            <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}">
-            <div class="card-body">
-                <h5 class="card-title">{{ product.name }}</h5>
-                <p class="card-text">{{ product.price }} руб.</p>
-                <a href="{% url 'product_detail' product.id %}" class="btn btn-primary">Подробнее</a>
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Каталог товаров</h1>
+    <div class="row">
+        {% for product in products %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}">
+                {% else %}
+                    <img src="{% static 'images/placeholder.png' %}" class="card-img-top" alt="Нет изображения">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ product.name }}</h5>
+                    <p class="card-text">{{ product.description }}</p>
+                    <p><strong>Цена: {{ product.price }} руб.</strong></p>
+                    <a href="{% url 'product_detail' product.id %}" class="btn btn-primary">Подробнее</a>
+                </div>
             </div>
         </div>
+        {% endfor %}
     </div>
-    {% endfor %}
 </div>
 {% endblock %}
