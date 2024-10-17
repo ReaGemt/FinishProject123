@@ -1,18 +1,40 @@
-<!-- templates/order_history.html -->
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
-<h2>Order History</h2>
-<ul>
-    {% for order in orders %}
-    <li>
-        Order #{{ order.id }} - {{ order.created_at }} - Total: {{ order.total_price }} USD
-        <ul>
-            {% for item in order.orderitem_set.all %}
-            <li>{{ item.product.name }} - {{ item.quantity }} pcs</li>
-            {% endfor %}
-        </ul>
-    </li>
-    {% endfor %}
-</ul>
+<div class="container">
+    <h2 class="text-center mb-4">История заказов</h2>
+
+    {% if orders %}
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th scope="col">№ заказа</th>
+                        <th scope="col">Дата заказа</th>
+                        <th scope="col">Товары</th>
+                        <th scope="col">Итого</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>{{ order.id }}</td>
+                        <td>{{ order.created_at|date:"d.m.Y H:i" }}</td>
+                        <td>
+                            <ul>
+                                {% for item in order.orderitem_set.all %}
+                                <li>{{ item.product.name }} - {{ item.quantity }} шт.</li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td>{{ order.total_price }} руб.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-center">У вас нет заказов.</p>
+    {% endif %}
+</div>
 {% endblock %}

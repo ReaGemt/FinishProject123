@@ -2,7 +2,19 @@
 {% block title %}О нас{% endblock %}
 {% load static %}
 {% block content %}
-<h2 class="text-center">О нас</h2>
-<p>FlowerDelivery - это сервис по доставке цветов в Москве. Мы предлагаем широкий выбор цветов для любого события.</p>
-<p>Наша миссия - приносить радость людям через красивейшие букеты и отличное обслуживание.</p>
+<div class="container mt-4">
+    <h2 class="text-center mb-4">О нас</h2>
+
+    <!-- Пример для добавления изображения -->
+    <div class="text-center mb-4">
+        <img src="{% static 'images/about_us.jpg' %}" alt="О нас" class="img-fluid" style="max-width: 400px;">
+    </div>
+
+    <p class="lead text-center">
+        FlowerDelivery - это сервис по доставке цветов в Москве. Мы предлагаем широкий выбор цветов для любого события.
+    </p>
+    <p class="text-center">
+        Наша миссия - приносить радость людям через красивейшие букеты и отличное обслуживание.
+    </p>
+</div>
 {% endblock %}

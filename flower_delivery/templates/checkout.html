@@ -1,14 +1,40 @@
-<!-- templates/checkout.html -->
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
-<h2>Checkout</h2>
+<h2>Оформление заказа</h2>
+
+<!-- Информация о корзине -->
+<div class="table-responsive mb-4">
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Товар</th>
+                <th scope="col">Количество</th>
+                <th scope="col">Цена</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in cart.cartitem_set.all %}
+            <tr>
+                <td>{{ item.product.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.product.price }} руб.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Общая стоимость -->
+<p>Итого: <strong>{{ cart.get_total }} руб.</strong></p>
+
+<!-- Форма для ввода адреса доставки -->
 <form method="post">
     {% csrf_token %}
-    <div class="form-group">
-        <label for="address">Delivery Address</label>
+    <div class="form-group mb-3">
+        <label for="address">Адрес доставки</label>
         <input type="text" name="address" class="form-control" required>
     </div>
-    <button type="submit" class="btn btn-primary">Place Order</button>
+    <button type="submit" class="btn btn-primary">Оформить заказ</button>
 </form>
 {% endblock %}

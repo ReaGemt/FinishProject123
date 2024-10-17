@@ -1,13 +1,22 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from .models import Product, Cart, CartItem, Order, OrderItem, Review
+# core/views.py
 from django.contrib import messages
-from django.contrib.auth import login
 from .forms import UserRegisterForm
+from django.contrib.auth.models import User
+from .forms import UserUpdateForm
+from django.core.paginator import Paginator
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required, user_passes_test
+from .models import Product, Cart, CartItem, Order, OrderItem, Review
+from django.contrib.auth import login
+from .forms import ProductForm
+from django.core.exceptions import PermissionDenied
 
 def product_list(request):
-    products = Product.objects.all()
-    return render(request, 'catalog.html', {'products': products})
+    product_list = Product.objects.all()
+    paginator = Paginator(product_list, 6)  # Показывать 6 товаров на странице
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'catalog.html', {'page_obj': page_obj, 'products': page_obj.object_list, 'is_paginated': True})
 
 @login_required
 def add_to_cart(request, product_id):
@@ -80,3 +89,108 @@ def about(request):
 
 def contact(request):
     return render(request, 'contact.html')
+
+# Проверка, что текущий пользователь является администратором
+def is_admin(user):
+    return user.is_superuser
+
+@user_passes_test(is_admin)
+def user_list(request):
+    users = User.objects.all()
+    return render(request, 'user_list.html', {'users': users})
+
+@user_passes_test(is_admin)
+def edit_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    if request.method == 'POST':
+        form = UserUpdateForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            return redirect('user_list')
+    else:
+        form = UserUpdateForm(instance=user)
+    return render(request, 'edit_user.html', {'form': form, 'user': user})
+
+@user_passes_test(is_admin)
+def delete_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    if request.method == 'POST':
+        user.delete()
+        return redirect('user_list')
+    return render(request, 'delete_user.html', {'user': user})
+
+
+def is_manager(user):
+    return user.groups.filter(name='Менеджер').exists() or user.is_superuser
+
+@user_passes_test(is_manager)
+def add_product(request):
+    # логика для добавления товара
+    pass
+
+@user_passes_test(is_manager)
+def edit_product(request, product_id):
+    # логика для редактирования товара
+    pass
+
+@login_required
+def update_cart_item(request, item_id):
+    cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+    if request.method == "POST":
+        quantity = int(request.POST.get('quantity'))
+        if quantity > 0:
+            cart_item.quantity = quantity
+            cart_item.save()
+    return redirect('view_cart')
+
+@login_required
+def remove_cart_item(request, item_id):
+    cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+    if request.method == "POST":
+        cart_item.delete()
+    return redirect('view_cart')
+
+
+# Проверка: является ли пользователь менеджером
+def is_manager(user):
+    return user.groups.filter(name='Менеджеры').exists() or user.is_superuser
+
+
+@user_passes_test(is_manager)
+def add_product(request):
+    if request.method == 'POST':
+        form = ProductForm(request.POST, request.FILES)
+        if form.is_valid():
+            product = form.save(commit=False)
+            product.created_by = request.user  # Присваиваем текущего пользователя как создателя
+            product.save()
+            return redirect('catalog')
+    else:
+        form = ProductForm()
+    return render(request, 'add_product.html', {'form': form})
+
+
+@user_passes_test(is_manager)
+def edit_product(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+
+    # Проверка: если пользователь не админ и не создал этот продукт, доступ запрещен
+    if request.user != product.created_by and not request.user.is_superuser:
+        raise PermissionDenied
+
+    if request.method == 'POST':
+        form = ProductForm(request.POST, request.FILES, instance=product)
+        if form.is_valid():
+            form.save()
+            return redirect('catalog')
+    else:
+        form = ProductForm(instance=product)
+
+    return render(request, 'edit_product.html', {'form': form})
+
+
+# Пример других представлений
+def product_list(request):
+    products = Product.objects.all()
+    return render(request, 'catalog.html', {'products': products})
+
