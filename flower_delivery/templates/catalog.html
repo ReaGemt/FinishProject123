@@ -1,9 +1,10 @@
+<!-- templates/catalog.html -->
 {% extends 'base.html' %}
 {% block title %}Каталог товаров{% endblock %}
 {% load static %}
 {% block content %}
 <div class="container mt-5">
-    <h1 class="text-center mb-4">Каталог товаров</h1>
+    <h1 class="text-center mb-4">Каталог цветов</h1>
 
     <!-- Пагинация вверху каталога -->
     {% if is_paginated %}
@@ -56,14 +57,16 @@
                     <p class="card-text">{{ product.description|truncatewords:20 }}</p>
                     <p><strong>Цена: {{ product.price }} руб.</strong></p>
 
-                    <!-- Отображение рейтинга товара -->
+                    <!-- Отображение рейтинга товара со звёздочками -->
                     <p>
                         Рейтинг:
-                        {% if product.rating %}
-                            {{ product.rating }}/5
-                        {% else %}
-                            Нет оценок
-                        {% endif %}
+                        {% for i in "12345" %}
+                            {% if product.rating >= forloop.counter %}
+                                <i class="fas fa-star text-warning"></i>
+                            {% else %}
+                                <i class="far fa-star text-muted"></i>
+                            {% endif %}
+                        {% endfor %}
                     </p>
                     <a href="{% url 'product_detail' product.id %}" class="btn btn-primary">Подробнее</a>
                 </div>
@@ -110,4 +113,3 @@
     {% endif %}
 </div>
 {% endblock %}
-

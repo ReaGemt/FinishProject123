@@ -1,119 +1,144 @@
-/* static/css/styles.css */
+/* Основные стили */
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f8f9fa;
-    color: #333;
+    background: linear-gradient(to bottom, #f0f8ff, #e6f7ff); /* Легкий градиент для фона */
+    font-family: 'Roboto', Arial, sans-serif; /* Добавим чуть более современный шрифт */
 }
 
+/* Стиль для хедера */
 header {
-    background-color: #343a40;
-    color: white;
+    background-color: #f8f9fa; /* Светло-серый фон */
+    padding: 10px 0; /* Добавляем отступы сверху и снизу */
+    border-bottom: 1px solid #e9ecef; /* Легкая нижняя граница */
+}
+
+.navbar-brand img {
+    height: 60px; /* Устанавливаем высоту логотипа */
+    display: inline-block;
+    vertical-align: middle; /* Центрируем по вертикали */
+}
+
+/* Стили навигации */
+.nav {
+    display: flex;
+    align-items: center; /* Центрируем ссылки по вертикали */
+}
+
+.nav .nav-link, .nav form {
+    margin-right: 15px; /* Отступ между ссылками */
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Отступ между иконкой и текстом */
+}
+
+.nav .fa {
+    font-size: 1em; /* Размер иконок */
+}
+
+.nav-link {
+    font-size: 16px;
+    padding: 5px 15px;
+    color: #007bff;
+    font-weight: bold;
+}
+
+.nav-link:hover, .btn-link:hover {
+    background-color: #e9ecef; /* Легкий фон при наведении */
+    color: #0056b3; /* Темный цвет при наведении */
+    text-decoration: none;
+    border-radius: 5px; /* Скругление углов */
+}
+
+/* Стили для кнопок */
+.btn-link {
+    padding: 0;
+    font-size: 14px; /* Выравниваем шрифт с остальными ссылками */
+    color: #007bff; /* Цвет ссылки */
+    cursor: pointer;
+    text-decoration: none;
+}
+
+/* Стили для карточек товаров */
+.card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    transition: box-shadow 0.3s, transform 0.3s; /* Добавлен эффект масштабирования */
+}
+
+.card:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Улучшенный эффект тени */
+    transform: translateY(-5px); /* Легкое поднятие карточки */
+}
+
+.card-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     padding: 15px;
     text-align: center;
 }
 
-nav a {
-    color: white;
-    margin: 0 15px;
-    text-decoration: none;
+.card-title, .card-text {
+    min-height: 50px; /* Выравнивание по высоте */
 }
 
-nav a:hover {
-    text-decoration: underline;
+/* Уменьшаем размер карточек в каталоге */
+.catalog .card {
+    width: 180px; /* Уменьшаем ширину карточек */
+    margin: 10px;
+    display: inline-block;
+    vertical-align: top;
 }
 
-main {
-    padding: 20px;
+.catalog .card-title {
+    font-size: 18px;
+    margin-bottom: 10px;
 }
 
-footer {
-    background-color: #343a40;
-    color: white;
-    text-align: center;
-    padding: 10px;
-    position: fixed;
-    width: 100%;
-    bottom: 0;
-}
-/* static/css/styles.css */
-body {
-    background-color: #f8f9fa;
-}
-
-h2 {
-    font-weight: bold;
-}
-
-.btn-primary {
-    background-color: #007bff;
-    border-color: #007bff;
-}
-
-footer {
-    background-color: #343a40;
-    color: white;
-}
-/* Стили для страницы продукта */
-#mainImage {
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-#thumbnails .thumbnail {
-    width: 60px;
-    height: 60px;
-    cursor: pointer;
-}
-
-.thumbnail img {
-    width: 100%;
-    height: auto;
-}
-
-.rating {
-    display: flex;
-    align-items: center;
-}
-
-.rating .badge {
-    font-size: 1.25rem;
-    margin-right: 0.5rem;
+.catalog .card-text {
+    font-size: 14px;
+    color: #555;
 }
 
 /* Стили для кнопок */
-.btn-primary {
-    background-color: #ff4d4d;
-    border-color: #ff4d4d;
+.catalog .btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    padding: 5px 10px;
+    font-size: 14px;
+    border-radius: 20px; /* Скругленные кнопки */
+    transition: background-color 0.3s, border-color 0.3s, transform 0.3s;
 }
 
-.btn-outline-secondary {
-    color: #333;
-    border-color: #ddd;
+.catalog .btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+    transform: scale(1.05); /* Легкое увеличение при наведении */
 }
 
-.btn-outline-secondary:hover {
+/* Стили для рейтинга */
+.text-warning {
+    color: #ffc107; /* Цвет жёлтых звёзд */
+}
+
+.text-muted {
+    color: #d6d6d6; /* Цвет пустых звёзд */
+}
+
+.fa-star, .fa-star-half-alt, .fa-star {
+    font-size: 1.2em; /* Регулируйте размер звёзд */
+}
+
+/* Стили для футера */
+footer {
     background-color: #f8f9fa;
-}
-body {
-    font-family: 'Arial', sans-serif;
-}
-
-h1 {
-    font-size: 2.5rem;
-    margin-bottom: 20px;
-}
-
-nav a {
-    text-decoration: none;
-    font-size: 1.2rem;
-    color: #333;
-}
-
-nav a:hover {
-    color: #007bff;
+    padding: 10px 0;
+    border-top: 1px solid #e9ecef;
 }
 
 footer p {
     margin: 0;
+    color: #555;
 }

@@ -1,3 +1,4 @@
+<!-- templates/product_detail.html -->
 {% extends 'base.html' %}
 {% block title %}{{ product.name }}{% endblock %}
 {% load static %}
@@ -14,11 +15,11 @@
         <h2>{{ product.name }}</h2>
         <p>{{ product.description }}</p>
         <p><strong>Цена: {{ product.price }} ₽</strong></p>
-        <p>Рейтинг: {{ product.rating }}/5</p> <!-- Рейтинг товара рядом с названием -->
+        <p id="total-price"><strong>Итого: {{ product.price }} ₽</strong></p>
         <form method="POST" action="{% url 'add_to_cart' product.id %}">
             {% csrf_token %}
             <label for="quantity">Количество:</label>
-            <input type="number" name="quantity" value="1" min="1" class="form-control mb-3" style="width: 100px;">
+            <input type="number" name="quantity" id="quantity" value="1" min="1" class="form-control mb-3" style="width: 100px;" onchange="updateTotal({{ product.price }})">
             <button type="submit" class="btn btn-success">Добавить в корзину</button>
         </form>
     </div>
@@ -32,7 +33,7 @@
         {% for review in product.review_set.all %}
         <li class="list-group-item">
             <p>{{ review.review_text }}</p>
-            <small>Рейтинг: {{ review.rating }}/5</small> <!-- Можно преобразовать в звезды, если хотите -->
+            <small>Рейтинг: {{ review.rating }}/5</small>
         </li>
         {% endfor %}
     </ul>
@@ -41,4 +42,12 @@
 {% endif %}
 
 <a href="{% url 'add_review' product.id %}" class="btn btn-primary mt-4">Добавить отзыв</a>
+
+<script>
+    function updateTotal(price) {
+        const quantity = document.getElementById("quantity").value;
+        const totalPrice = price * quantity;
+        document.getElementById("total-price").innerText = `Итого: ${totalPrice.toFixed(2)} ₽`;
+    }
+</script>
 {% endblock %}

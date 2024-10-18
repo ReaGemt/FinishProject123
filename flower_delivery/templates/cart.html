@@ -1,41 +1,45 @@
 <!-- templates/cart.html -->
 {% extends 'base.html' %}
-{% load static %}
+{% block title %}Ваша корзина{% endblock %}
 {% block content %}
-<h2 class="mb-4">Ваша корзина</h2>
-<div class="table-responsive">
-    <table class="table">
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Ваша корзина</h1>
+    <table class="table table-hover">
         <thead>
             <tr>
-                <th scope="col">Товар</th>
-                <th scope="col">Количество</th>
-                <th scope="col">Цена</th>
-                <th scope="col">Действие</th>
+                <th>Товар</th>
+                <th>Количество</th>
+                <th>Цена</th>
+                <th>Итого</th>
+                <th>Действие</th> <!-- Новый столбец для кнопки удаления -->
             </tr>
         </thead>
         <tbody>
-            {% for item in cart.cartitem_set.all %}
+            {% for item in cart_items %}
             <tr>
                 <td>{{ item.product.name }}</td>
                 <td>
-                    <form method="post" action="{% url 'update_cart_item' item.id %}">
-                        {% csrf_token %}
-                        <input type="number" name="quantity" value="{{ item.quantity }}" min="1" class="form-control" style="width: 100px; display: inline;">
-                        <button type="submit" class="btn btn-primary btn-sm">Обновить</button>
-                    </form>
+                    <input type="number" value="{{ item.quantity }}" min="1" class="form-control quantity-input" data-item-id="{{ item.id }}">
                 </td>
                 <td>{{ item.product.price }} руб.</td>
+                <td class="item-total">{{ item.get_total_price }} руб.</td>
                 <td>
-                    <form method="post" action="{% url 'remove_cart_item' item.id %}">
+                    <form action="{% url 'remove_from_cart' item.id %}" method="post">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
                     </form>
                 </td>
             </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">Ваша корзина пуста.</td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>
+    <div class="text-end">
+        <p><strong>Итого: <span id="cart-total">{{ cart_total }} руб.</span></strong></p>
+        <a href="{% url 'checkout' %}" class="btn btn-success">Оформить заказ</a>
+    </div>
 </div>
-<p>Итого: <strong>{{ cart.get_total }} руб.</strong></p>
-<a href="{% url 'checkout' %}" class="btn btn-success">Оформить заказ</a>
 {% endblock %}

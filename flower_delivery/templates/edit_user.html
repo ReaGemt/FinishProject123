@@ -14,12 +14,10 @@
         </div>
     {% endif %}
 
-    <form method="POST">
+    <form method="post">
         {% csrf_token %}
-        <div class="form-group mb-3">
-            {{ form.as_p }}  <!-- Выводим все поля формы с помощью as_p -->
-        </div>
-        <button type="submit" class="btn btn-primary">Сохранить</button>
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Сохранить изменения</button>
         <a href="{% url 'user_list' %}" class="btn btn-secondary">Отмена</a>
     </form>
 </div>
