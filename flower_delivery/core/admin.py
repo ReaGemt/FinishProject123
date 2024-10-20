@@ -4,8 +4,8 @@ from .models import Product, Order, Review, OrderItem
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'price', 'category', 'is_popular', 'created_by')
-    list_filter = ('category', 'is_popular')
+    list_display = ('name', 'price', 'category', 'rating', 'is_popular', 'created_by')  # Добавили rating
+    list_filter = ('category', 'is_popular', 'rating')  # Добавили фильтр по рейтингу
     search_fields = ('name',)
 
 @admin.register(Order)

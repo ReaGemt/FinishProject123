@@ -2,12 +2,6 @@ import os
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 
-LANGUAGES = [
-    ('ru', _('Русский')),
-    ('en', _('English')),
-    # Добавьте другие языки
-]
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -37,6 +31,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
 ]
 
 ROOT_URLCONF = 'flower_delivery.urls'
@@ -84,11 +79,19 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Internationalization
-LANGUAGE_CODE = 'ru-ru'
+LANGUAGE_CODE = 'ru'  # Язык по умолчанию
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
+LANGUAGES = [
+    ('en', _('English')),
+    ('ru', _('Russian')),
+]
+
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
@@ -101,3 +104,12 @@ MEDIA_ROOT = BASE_DIR / 'media/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGOUT_REDIRECT_URL = '/'
+
+# Настройки SMTP для отправки писем
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # Для Gmail
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'your_email@gmail.com'  # Замените на ваш email
+EMAIL_HOST_PASSWORD = 'your_password'  # Замените на ваш пароль
+DEFAULT_FROM_EMAIL = 'your_email@gmail.com'

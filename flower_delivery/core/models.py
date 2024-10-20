@@ -20,6 +20,7 @@ class Product(models.Model):
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='roses')
     is_popular = models.BooleanField(default=False)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='products')
+    rating = models.DecimalField(max_digits=2, decimal_places=1, default=5.0)
 
     def __str__(self):
         return self.name

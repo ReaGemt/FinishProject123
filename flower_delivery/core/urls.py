@@ -45,4 +45,12 @@ urlpatterns = [
     path('password_reset_done/', auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
     path('password_reset_confirm/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('password_reset_complete/', auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
+
+    # Дополнительно: Отправка сообщения
+    path("send_message/", views.send_message, name="send_message"),
+    path('profile/edit/', views.edit_profile, name='edit_profile'),
+    path('change_language/', views.change_language, name='change_language'),
+    path('change_currency/', views.change_currency, name='change_currency'),
+
 ]
+

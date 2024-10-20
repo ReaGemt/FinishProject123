@@ -1,5 +1,6 @@
 # core/views.py
-from django.contrib import messages
+
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.paginator import Paginator
 from .models import Product, Cart, CartItem, Order, OrderItem, Review
@@ -8,6 +9,12 @@ from django.contrib.auth import login
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import render, redirect
+from django.core.mail import send_mail
+from django.contrib import messages
+from django.http import HttpResponseRedirect
+from django.shortcuts import redirect
+from django.utils import translation
 
 
 def product_list(request):
@@ -214,3 +221,47 @@ def remove_product(request, product_id):
 def user_list(request):
     users = User.objects.all()
     return render(request, 'user_list.html', {'users': users})
+
+def send_message(request):
+    if request.method == "POST":
+        name = request.POST.get("name")
+        email = request.POST.get("email")
+        message = request.POST.get("message")
+
+        # Отправка письма на почту администратора
+        send_mail(
+            subject=f"Новое сообщение от {name}",
+            message=f"От {name} ({email}):\n\n{message}",
+            from_email=email,
+            recipient_list=["info@flowerdelivery.ru"],  # Замените на вашу реальную почту администратора
+        )
+
+        messages.success(request, "Ваше сообщение успешно отправлено!")
+        return redirect("contact")  # Возвращает пользователя на страницу контактов
+
+    return render(request, "contact.html")
+
+@login_required
+def edit_profile(request):
+    if request.method == 'POST':
+        form = UserUpdateForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Ваш профиль был успешно обновлен.')
+            return redirect('profile')
+    else:
+        form = UserUpdateForm(instance=request.user)
+    return render(request, 'edit_user.html', {'form': form, 'user': request.user})
+
+def change_language(request):
+    lang = request.GET.get('lang', 'ru')
+    if lang in dict(settings.LANGUAGES).keys():
+        translation.activate(lang)
+        request.session[translation.LANGUAGE_SESSION_KEY] = lang
+    return redirect(request.META.get('HTTP_REFERER'))
+
+def change_currency(request):
+    currency = request.GET.get('currency', 'rub')
+    # Здесь добавьте логику для сохранения выбора пользователя
+    request.session['currency'] = currency
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))

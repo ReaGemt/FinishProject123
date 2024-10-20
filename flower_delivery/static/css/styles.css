@@ -1,4 +1,4 @@
-/* Переменные для цветов и шрифтов */
+/* Переменные для светлой темы */
 :root {
     --primary-color: #007bff;
     --secondary-color: #0056b3;
@@ -12,12 +12,26 @@
     --muted-color: #d6d6d6;
 }
 
+/* Переменные для темной темы */
+body.dark-theme {
+    --primary-color: #303f9f;
+    --secondary-color: #1e3a8a;
+    --light-bg: #1f1f1f;
+    --text-color: #e0e0e0;
+    --gradient-start: #222;
+    --gradient-end: #333;
+    --header-border: #333;
+    --hover-bg: #616161;
+    --warning-color: #ffc107;
+    --muted-color: #888;
+}
+
 /* Основные стили */
 body {
-    background: linear-gradient(to bottom, var(--gradient-start), var(--gradient-end)); /* Легкий градиент для фона */
-    font-family: 'Roboto', Arial, sans-serif; /* Современный шрифт */
+    background: linear-gradient(to bottom, var(--gradient-start), var(--gradient-end));
+    font-family: 'Roboto', Arial, sans-serif;
     color: var(--text-color);
-    transition: background 0.3s ease, color 0.3s ease; /* Плавные переходы для темы */
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* Стиль для хедера */
@@ -165,17 +179,6 @@ footer p {
     }
 
     .card {
-        width: 100%; /* Карточки будут занимать всю ширину на маленьких экранах */
+        width: 100%;
     }
-}
-
-/* Темная тема (опционально) */
-body.dark-mode {
-    background: linear-gradient(to bottom, #1e1e1e, #2c2c2c);
-    color: #ddd;
-}
-
-.dark-mode .card, .dark-mode .btn-primary {
-    background-color: #333;
-    color: #eee;
 }

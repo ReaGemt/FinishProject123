@@ -18,7 +18,7 @@
             <div class="row align-items-center py-3">
                 <div class="col">
                     <a href="/" class="navbar-brand">
-                        <img src="{% static 'images/logo.png' %}" alt="Логотип" width="180"> <!-- Увеличили размер логотипа -->
+                        <img src="{% static 'images/logo.png' %}" alt="Логотип" width="180">
                     </a>
                 </div>
                 <div class="col text-end">
@@ -26,9 +26,9 @@
                         <a class="nav-link" href="{% url 'catalog' %}"><i class="fas fa-seedling"></i> Каталог</a>
                         <a class="nav-link" href="{% url 'about' %}"><i class="fas fa-info-circle"></i> О нас</a>
                         <a class="nav-link" href="{% url 'contact' %}"><i class="fas fa-envelope"></i> Контакты</a>
+                        <a class="nav-link" href="{% url 'view_cart' %}"><i class="fas fa-shopping-cart"></i> Корзина</a>
                         {% if user.is_authenticated %}
                             <a class="nav-link" href="{% url 'profile' %}"><i class="fas fa-user"></i> Личный кабинет</a>
-                            <!-- Сделали кнопку выхода ссылкой с JavaScript -->
                             <a class="nav-link" href="#" onclick="document.getElementById('logout-form').submit();"><i class="fas fa-sign-out-alt"></i> Выйти</a>
                             <form id="logout-form" method="post" action="{% url 'logout' %}" style="display: none;">
                                 {% csrf_token %}
@@ -39,19 +39,9 @@
                         {% endif %}
                     </nav>
 
-                    <!-- Меню выбора языка и валюты -->
+                    <!-- Убрали выбор языка и валюты -->
                     <div class="d-inline-block">
-                        <select class="form-select form-select-sm" id="language-select" onchange="changeLanguage()">
-                            <option value="ru" selected>Русский</option>
-                            <option value="en">English</option>
-                        </select>
-                    </div>
-                    <div class="d-inline-block ms-2">
-                        <select class="form-select form-select-sm" id="currency-select" onchange="changeCurrency()">
-                            <option value="rub" selected>₽ RUB</option>
-                            <option value="usd">$ USD</option>
-                            <option value="eur">€ EUR</option>
-                        </select>
+                        <button id="theme-toggle" class="btn btn-sm">Сменить тему</button>
                     </div>
                 </div>
             </div>
@@ -71,20 +61,18 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Скрипты для изменения языка и валюты -->
+    <!-- Темная тема -->
     <script>
-        function changeLanguage() {
-            const selectedLanguage = document.getElementById('language-select').value;
-            alert(`Язык был изменен на ${selectedLanguage}`);
-            // Здесь можно добавить AJAX-запрос для изменения языка на сервере
-        }
+    document.getElementById("theme-toggle").addEventListener("click", function() {
+        document.body.classList.toggle("dark-theme");
+        const isDark = document.body.classList.contains("dark-theme");
+        localStorage.setItem("theme", isDark ? "dark" : "light");
+    });
 
-        function changeCurrency() {
-            const selectedCurrency = document.getElementById('currency-select').value;
-            alert(`Валюта была изменена на ${selectedCurrency}`);
-            // Здесь можно добавить AJAX-запрос для изменения валюты на сервере
-        }
+    if (localStorage.getItem("theme") === "dark") {
+        document.body.classList.add("dark-theme");
+    }
     </script>
+
 </body>
 </html>
-
