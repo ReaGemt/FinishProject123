@@ -33,7 +33,7 @@
         {% for review in product.review_set.all %}
         <li class="list-group-item">
             <p>{{ review.review_text }}</p>
-            <small>Рейтинг: {{ review.rating }}/5</small>
+            <small>Рейтинг: {{ review.rating }}/5 - {{ review.created_at|date:"d.m.Y" }}</small>
         </li>
         {% endfor %}
     </ul>
@@ -49,5 +49,15 @@
         const totalPrice = price * quantity;
         document.getElementById("total-price").innerText = `Итого: ${totalPrice.toFixed(2)} ₽`;
     }
+
+    // Ensure quantity is sent correctly
+    document.querySelector('form').onsubmit = function() {
+        const quantityInput = document.getElementById('quantity');
+        if (!quantityInput.value || quantityInput.value <= 0) {
+            alert('Пожалуйста, введите корректное количество.');
+            return false;
+        }
+    };
 </script>
 {% endblock %}
+

@@ -1,3 +1,4 @@
+<!-- templates/contact.html -->
 {% extends 'base.html' %}
 {% block title %}Контакты{% endblock %}
 
@@ -9,6 +10,25 @@
         <p>Вы можете связаться с нами по телефону: <strong>+7 (495) 123-45-67</strong></p>
         <p>Или написать нам на email: <strong>info@flowerdelivery.ru</strong></p>
         <p>Наш адрес: <strong>г. Москва, ул. Цветочная, 5</strong></p>
+
+        <!-- Добавьте форму обратной связи (опционально) -->
+        <h5 class="mt-4">Оставьте нам сообщение:</h5>
+        <form method="post" action="{% url 'send_message' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="name">Ваше имя</label>
+                <input type="text" class="form-control" name="name" required>
+            </div>
+            <div class="mb-3">
+                <label for="email">Ваш Email</label>
+                <input type="email" class="form-control" name="email" required>
+            </div>
+            <div class="mb-3">
+                <label for="message">Ваше сообщение</label>
+                <textarea class="form-control" name="message" rows="4" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Отправить</button>
+        </form>
     </div>
 
     <div class="col-md-6">

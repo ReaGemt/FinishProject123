@@ -11,11 +11,11 @@
                 <th>Количество</th>
                 <th>Цена</th>
                 <th>Итого</th>
-                <th>Действие</th> <!-- Новый столбец для кнопки удаления -->
+                <th>Действие</th>
             </tr>
         </thead>
         <tbody>
-            {% for item in cart_items %}
+            {% for item in cart.items.all %}
             <tr>
                 <td>{{ item.product.name }}</td>
                 <td>
@@ -24,7 +24,7 @@
                 <td>{{ item.product.price }} руб.</td>
                 <td class="item-total">{{ item.get_total_price }} руб.</td>
                 <td>
-                    <form action="{% url 'remove_from_cart' item.id %}" method="post">
+                    <form action="{% url 'remove_cart_item' item.id %}" method="post">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
                     </form>
@@ -38,8 +38,45 @@
         </tbody>
     </table>
     <div class="text-end">
-        <p><strong>Итого: <span id="cart-total">{{ cart_total }} руб.</span></strong></p>
+        <p><strong>Итого: <span id="cart-total">{{ cart.get_total }} руб.</span></strong></p>
         <a href="{% url 'checkout' %}" class="btn btn-success">Оформить заказ</a>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const quantityInputs = document.querySelectorAll('.quantity-input');
+        const cartTotalElement = document.getElementById('cart-total');
+
+        quantityInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                const itemId = this.getAttribute('data-item-id');
+                let quantity = parseInt(this.value);
+                if (quantity < 1) {
+                    quantity = 1;
+                    this.value = 1;
+                }
+
+                // Обновление количества через AJAX
+                fetch(`{% url 'update_cart_item' %}${itemId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ quantity })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Обновить стоимость товара и общую сумму корзины
+                        this.closest('tr').querySelector('.item-total').textContent = `${data.item_total} руб.`;
+                        cartTotalElement.textContent = `${data.cart_total} руб.`;
+                    }
+                })
+                .catch(error => console.error('Ошибка:', error));
+            });
+        });
+    });
+</script>
 {% endblock %}

@@ -8,7 +8,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <title>Доставка Цветов</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon"> <!-- Добавили favicon -->
+    <title>{% block title %}Доставка Цветов{% endblock %}</title>
 </head>
 <body>
     <header class="bg-light border-bottom">
@@ -26,9 +28,10 @@
                         <a class="nav-link" href="{% url 'contact' %}"><i class="fas fa-envelope"></i> Контакты</a>
                         {% if user.is_authenticated %}
                             <a class="nav-link" href="{% url 'profile' %}"><i class="fas fa-user"></i> Личный кабинет</a>
-                            <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                            <!-- Сделали кнопку выхода ссылкой с JavaScript -->
+                            <a class="nav-link" href="#" onclick="document.getElementById('logout-form').submit();"><i class="fas fa-sign-out-alt"></i> Выйти</a>
+                            <form id="logout-form" method="post" action="{% url 'logout' %}" style="display: none;">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-link" style="padding: 0; border: none; background: none;"><i class="fas fa-sign-out-alt"></i> Выйти</button>
                             </form>
                         {% else %}
                             <a class="nav-link" href="{% url 'login' %}">Войти</a>
@@ -38,18 +41,16 @@
 
                     <!-- Меню выбора языка и валюты -->
                     <div class="d-inline-block">
-                        <select class="form-select form-select-sm" id="language-select">
+                        <select class="form-select form-select-sm" id="language-select" onchange="changeLanguage()">
                             <option value="ru" selected>Русский</option>
                             <option value="en">English</option>
-                            <!-- Добавьте другие языки -->
                         </select>
                     </div>
                     <div class="d-inline-block ms-2">
-                        <select class="form-select form-select-sm" id="currency-select">
+                        <select class="form-select form-select-sm" id="currency-select" onchange="changeCurrency()">
                             <option value="rub" selected>₽ RUB</option>
                             <option value="usd">$ USD</option>
                             <option value="eur">€ EUR</option>
-                            <!-- Добавьте другие валюты -->
                         </select>
                     </div>
                 </div>
@@ -69,5 +70,21 @@
     <!-- Bootstrap JS и Popper.js -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Скрипты для изменения языка и валюты -->
+    <script>
+        function changeLanguage() {
+            const selectedLanguage = document.getElementById('language-select').value;
+            alert(`Язык был изменен на ${selectedLanguage}`);
+            // Здесь можно добавить AJAX-запрос для изменения языка на сервере
+        }
+
+        function changeCurrency() {
+            const selectedCurrency = document.getElementById('currency-select').value;
+            alert(`Валюта была изменена на ${selectedCurrency}`);
+            // Здесь можно добавить AJAX-запрос для изменения валюты на сервере
+        }
+    </script>
 </body>
 </html>
+

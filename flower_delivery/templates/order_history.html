@@ -1,3 +1,4 @@
+<!-- templates/order_history.html -->
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
@@ -6,13 +7,15 @@
 
     {% if orders %}
         <div class="table-responsive">
-            <table class="table table-bordered">
-                <thead>
+            <table class="table table-bordered table-hover">
+                <thead class="table-light">
                     <tr>
                         <th scope="col">№ заказа</th>
                         <th scope="col">Дата заказа</th>
                         <th scope="col">Товары</th>
                         <th scope="col">Итого</th>
+                        <th scope="col">Статус</th> <!-- Добавлено: Колонка статуса -->
+                        <th scope="col">Действие</th> <!-- Добавлено: Кнопка для просмотра деталей -->
                     </tr>
                 </thead>
                 <tbody>
@@ -27,7 +30,20 @@
                                 {% endfor %}
                             </ul>
                         </td>
-                        <td>{{ order.total_price }} руб.</td>
+                        <td>{{ order.get_total_price }} руб.</td>
+                        <td>
+                            <span class="badge
+                                {% if order.status == 'pending' %} bg-warning
+                                {% elif order.status == 'confirmed' %} bg-primary
+                                {% elif order.status == 'shipped' %} bg-info
+                                {% elif order.status == 'delivered' %} bg-success
+                                {% else %} bg-danger {% endif %}">
+                                {{ order.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'order_detail' order.id %}" class="btn btn-sm btn-outline-primary">Подробнее</a>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>

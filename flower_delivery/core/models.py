@@ -1,5 +1,9 @@
+# core/models.py
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from telegram import Bot
 
 # Модель товара
 class Product(models.Model):
@@ -20,32 +24,6 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
-class Cart(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f"Корзина пользователя: {self.user.username}"
-
-    def get_total(self):
-        return sum(item.get_total_price() for item in self.cartitem_set.all())
-
-
-class CartItem(models.Model):
-    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.IntegerField(default=1)
-
-    def get_total_price(self):
-        return self.product.price * self.quantity
-
-    def __str__(self):
-        return f"{self.quantity} of {self.product.name}"
-
-# Модель изображения для товара
-class ProductImage(models.Model):
-    product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='product_images/')
-
 # Модель корзины
 class Cart(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -55,14 +33,13 @@ class Cart(models.Model):
         return f"Корзина пользователя: {self.user.username}"
 
     def get_total(self):
-        total = sum(item.product.price * item.quantity for item in self.cartitem_set.all())
-        return total
+        return sum(item.get_total_price() for item in self.items.all())
 
-# Модель элемента корзины (связь с Cart)
+# Модель элемента корзины
 class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField(default=1)
-    cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
 
     def get_total_price(self):
         return self.product.price * self.quantity
@@ -88,7 +65,7 @@ class Order(models.Model):
     def __str__(self):
         return f'Order {self.id} - {self.status}'
 
-# Модель элемента заказа (связь с Order)
+# Модель элемента заказа
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -107,38 +84,22 @@ class Review(models.Model):
     def __str__(self):
         return f"Review for {self.product.name} by {self.id}"
 
+# Telegram Bot Integration
+TELEGRAM_BOT_TOKEN = 'ВАШ_ТОКЕН_БОТА'
 
-class Cart(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    products = models.ManyToManyField(Product, through='CartItem')
+@receiver(post_save, sender=Order)
+def send_order_status_update(sender, instance, **kwargs):
+    if TELEGRAM_BOT_TOKEN:
+        bot = Bot(token=TELEGRAM_BOT_TOKEN)
+        user = instance.user
+        status = instance.get_status_display()
 
-    def __str__(self):
-        return f"Корзина пользователя: {self.user.username}"
-
-class CartItem(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.IntegerField(default=1)
-    cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
-
-    def get_total_price(self):
-        return self.product.price * self.quantity
-
-class Cart(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f"Корзина пользователя: {self.user.username}"
-
-    def get_total(self):
-        return sum(item.get_total_price() for item in self.items.all())
-
-class CartItem(models.Model):
-    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.IntegerField(default=1)
-
-    def get_total_price(self):
-        return self.product.price * self.quantity
-
-    def __str__(self):
-        return f"{self.quantity} of {self.product.name}"
+        # Проверьте наличие telegram_chat_id у пользователя
+        if hasattr(user, 'profile') and user.profile.telegram_chat_id:
+            chat_id = user.profile.telegram_chat_id
+            message = f"Ваш заказ #{instance.id} обновлен. Новый статус: {status}."
+            bot.send_message(chat_id=chat_id, text=message)
+        else:
+            print("Telegram chat ID не найден у пользователя.")
+    else:
+        print("Telegram Bot Token отсутствует.")

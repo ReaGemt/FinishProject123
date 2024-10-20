@@ -4,10 +4,13 @@
 {% block content %}
 <div class="text-center mt-5">
     <img src="{% static 'images/success-icon.png' %}" alt="Успех" width="100" class="mb-4">
-    <h2 class="mb-4">Заказ успешно оформлен!</h2>
+    <h2 class="mb-4 text-success">Заказ успешно оформлен!</h2> <!-- Добавлен класс для зелёного цвета -->
     <p class="lead">Ваш заказ был успешно принят. Спасибо, что выбрали нас!</p>
     <hr class="my-4">
-    <a href="{% url 'catalog' %}" class="btn btn-primary btn-lg">Вернуться к каталогу</a>
+    <div class="d-flex justify-content-center">
+        <a href="{% url 'order_history' %}" class="btn btn-outline-success btn-lg me-2">Посмотреть заказы</a> <!-- Кнопка для истории заказов -->
+        <a href="{% url 'catalog' %}" class="btn btn-primary btn-lg">Вернуться к каталогу</a>
+    </div>
 </div>
 {% endblock %}
 

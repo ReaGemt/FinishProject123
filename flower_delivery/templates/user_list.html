@@ -1,7 +1,17 @@
+<!-- templates/user_list.html -->
 {% extends 'base.html' %}
 {% block content %}
-<h2>Управление пользователями</h2>
-<table class="table">
+<h2 class="mb-4">Управление пользователями</h2>
+
+<!-- Форма поиска -->
+<form method="get" class="mb-3">
+    <div class="input-group">
+        <input type="text" name="search" class="form-control" placeholder="Поиск по имени пользователя" value="{{ request.GET.search }}">
+        <button class="btn btn-primary" type="submit">Поиск</button>
+    </div>
+</form>
+
+<table class="table table-hover">
     <thead>
         <tr>
             <th>Имя пользователя</th>
@@ -17,12 +27,70 @@
             <td>{{ user.email }}</td>
             <td>{{ user.groups.all|join:", " }}</td>
             <td>
-                <a href="{% url 'edit_user' user.id %}" class="btn btn-warning">Редактировать</a>
-                <a href="{% url 'delete_user' user.id %}" class="btn btn-danger"
-                   onclick="return confirm('Вы уверены, что хотите удалить пользователя {{ user.username }}?');">Удалить</a>
+                <a href="{% url 'edit_user' user.id %}" class="btn btn-warning btn-sm">Редактировать</a>
+                <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteUserModal{{ user.id }}">Удалить</button>
             </td>
         </tr>
+
+        <!-- Модальное окно для подтверждения удаления пользователя -->
+        <div class="modal fade" id="deleteUserModal{{ user.id }}" tabindex="-1" aria-labelledby="deleteUserModalLabel{{ user.id }}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteUserModalLabel{{ user.id }}">Подтверждение удаления</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                    </div>
+                    <div class="modal-body">
+                        Вы уверены, что хотите удалить пользователя <strong>{{ user.username }}</strong>?
+                    </div>
+                    <div class="modal-footer">
+                        <form action="{% url 'delete_user' user.id %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Удалить</button>
+                        </form>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         {% endfor %}
     </tbody>
 </table>
+
+<!-- Пагинация -->
+{% if is_paginated %}
+<nav aria-label="Навигация по страницам">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Предыдущая">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">&laquo;</span>
+            </li>
+        {% endif %}
+
+        {% for num in paginator.page_range %}
+            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Следующая">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">&raquo;</span>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
 {% endblock %}

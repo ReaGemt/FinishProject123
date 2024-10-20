@@ -1,3 +1,4 @@
+<!-- templates/delete_user.html -->
 {% extends 'base.html' %}
 {% block content %}
 <div class="container mt-4">
@@ -18,7 +19,8 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    Вы уверены, что хотите удалить пользователя {{ user.username }}?
+                    <p>Вы уверены, что хотите удалить пользователя {{ user.username }}?</p>
+                    <p class="text-danger"><small>Эта операция необратима, и все связанные данные будут потеряны.</small></p>
                 </div>
                 <div class="modal-footer">
                     <form method="POST">

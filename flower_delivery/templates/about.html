@@ -1,3 +1,4 @@
+<!-- \templates\about.html -->
 {% extends 'base.html' %}
 {% block title %}О нас{% endblock %}
 {% load static %}
@@ -11,10 +12,39 @@
     </div>
 
     <p class="lead text-center">
-        FlowerDelivery - это сервис по доставке цветов в Москве. Мы предлагаем широкий выбор цветов для любого события.
+        <strong>FlowerDelivery</strong> - это сервис по доставке цветов в Москве. Мы предлагаем широкий выбор цветов для любого события.
     </p>
-    <p class="text-center">
-        Наша миссия - приносить радость людям через красивейшие букеты и отличное обслуживание.
-    </p>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <h4>Наша миссия</h4>
+            <p>
+                Наша миссия - приносить радость людям через красивейшие букеты и отличное обслуживание. Мы стараемся сделать процесс заказа цветов простым и удобным для всех наших клиентов.
+            </p>
+        </div>
+        <div class="col-md-6">
+            <h4>Почему выбирают нас?</h4>
+            <ul>
+                <li>Быстрая и надежная доставка</li>
+                <li>Широкий выбор букетов на любой вкус и бюджет</li>
+                <li>Качественные и свежие цветы</li>
+                <li>Отличное обслуживание клиентов</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Раздел с социальными сетями -->
+    <div class="text-center mt-4">
+        <h4>Следите за нами в социальных сетях</h4>
+        <a href="https://facebook.com" class="me-3">
+            <img src="{% static 'images/facebook-icon.png' %}" alt="Facebook" style="width: 40px;">
+        </a>
+        <a href="https://instagram.com" class="me-3">
+            <img src="{% static 'images/instagram-icon.png' %}" alt="Instagram" style="width: 40px;">
+        </a>
+        <a href="https://twitter.com">
+            <img src="{% static 'images/twitter-icon.png' %}" alt="Twitter" style="width: 40px;">
+        </a>
+    </div>
 </div>
 {% endblock %}

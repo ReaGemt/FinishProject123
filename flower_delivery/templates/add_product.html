@@ -1,0 +1,34 @@
+<!-- templates\add_product.html -->
+{% extends 'base.html' %}
+{% block title %}Добавить продукт{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Добавить продукт</h2>
+
+    <form method="post" enctype="multipart/form-data" class="bg-light p-4 rounded shadow-sm">
+        {% csrf_token %}
+
+        <!-- Отображение ошибок формы, если они есть -->
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                <ul>
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        {{ form.as_p }}
+
+        <div class="d-flex justify-content-between mt-3">
+            <button type="submit" class="btn btn-primary">Добавить</button>
+            <a href="{% url 'catalog' %}" class="btn btn-secondary">Отмена</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

@@ -1,40 +1,58 @@
+<!-- templates/checkout.html -->
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
-<h2>Оформление заказа</h2>
+<h2 class="text-center mb-4">Оформление заказа</h2>
 
-<!-- Информация о корзине -->
-<div class="table-responsive mb-4">
-    <table class="table">
-        <thead>
-            <tr>
-                <th scope="col">Товар</th>
-                <th scope="col">Количество</th>
-                <th scope="col">Цена</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in cart.cartitem_set.all %}
-            <tr>
-                <td>{{ item.product.name }}</td>
-                <td>{{ item.quantity }}</td>
-                <td>{{ item.product.price }} руб.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<!-- Общая стоимость -->
-<p>Итого: <strong>{{ cart.get_total }} руб.</strong></p>
-
-<!-- Форма для ввода адреса доставки -->
-<form method="post">
-    {% csrf_token %}
-    <div class="form-group mb-3">
-        <label for="address">Адрес доставки</label>
-        <input type="text" name="address" class="form-control" required>
+<!-- Проверка на наличие товаров в корзине -->
+{% if cart.cartitem_set.all %}
+    <!-- Информация о корзине -->
+    <div class="table-responsive mb-4">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">Товар</th>
+                    <th scope="col">Количество</th>
+                    <th scope="col">Цена</th>
+                    <th scope="col">Итого</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cart.cartitem_set.all %}
+                <tr>
+                    <td>{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.product.price }} руб.</td>
+                    <td>{{ item.get_total_price }} руб.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-    <button type="submit" class="btn btn-primary">Оформить заказ</button>
-</form>
+
+    <!-- Общая стоимость -->
+    <p class="text-end">Итого: <strong>{{ cart.get_total }} руб.</strong></p>
+
+    <!-- Форма для ввода адреса доставки -->
+    <form method="post" class="mt-4">
+        {% csrf_token %}
+        <div class="form-group mb-3">
+            <label for="address">Адрес доставки</label>
+            <input type="text" name="address" class="form-control" required>
+        </div>
+
+        <!-- Новое поле для комментариев к заказу -->
+        <div class="form-group mb-3">
+            <label for="comments">Комментарии к заказу (необязательно)</label>
+            <textarea name="comments" rows="3" class="form-control"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Оформить заказ</button>
+    </form>
+{% else %}
+    <p class="text-center">Ваша корзина пуста. Пожалуйста, добавьте товары в корзину перед оформлением заказа.</p>
+    <div class="text-center">
+        <a href="{% url 'catalog' %}" class="btn btn-secondary">Вернуться в каталог</a>
+    </div>
+{% endif %}
 {% endblock %}
