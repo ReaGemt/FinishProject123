@@ -48,17 +48,14 @@ def view_cart(request):
 def update_cart_item(request, item_id):
     cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
     if request.method == "POST":
-        try:
-            quantity = int(request.POST.get('quantity'))
-            if quantity > 0:
-                cart_item.quantity = quantity
-                cart_item.save()
-                messages.success(request, 'Количество товара обновлено.')
-            else:
-                cart_item.delete()
-                messages.success(request, 'Товар удалён из корзины.')
-        except ValueError:
-            messages.error(request, 'Некорректное количество.')
+        quantity = int(request.POST.get('quantity'))
+        if quantity > 0:
+            cart_item.quantity = quantity
+            cart_item.save()
+            messages.success(request, 'Количество товара обновлено.')
+        else:
+            cart_item.delete()
+            messages.success(request, 'Товар удалён из корзины.')
     return redirect('view_cart')
 
 

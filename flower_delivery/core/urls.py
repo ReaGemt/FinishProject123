@@ -3,7 +3,6 @@ from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
 
-
 urlpatterns = [
     # Основные маршруты каталога и товаров
     path('', views.product_list, name='catalog'),  # Главная страница каталога
@@ -51,6 +50,4 @@ urlpatterns = [
     path('profile/edit/', views.edit_profile, name='edit_profile'),
     path('change_language/', views.change_language, name='change_language'),
     path('change_currency/', views.change_currency, name='change_currency'),
-
 ]
-
