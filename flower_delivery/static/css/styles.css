@@ -1,13 +1,16 @@
 /* Переменные для светлой темы */
 :root {
-    --primary-color: #007bff;
-    --secondary-color: #0056b3;
+    --primary-color: #ff6f61; /* Мягкий красный цвет для акцентов */
+    --secondary-color: #2c7a7b; /* Контрастный зеленый для кнопок */
     --light-bg: #f8f9fa;
-    --text-color: #555;
-    --gradient-start: #f0f8ff;
-    --gradient-end: #e6f7ff;
+    --background-color: #f5f5f5; /* Легкий серый для фона */
+    --text-color: #333;
+    --hover-bg: #e0e0e0;
+    --gradient-start: #fdfbfb;
+    --gradient-end: #ebedee;
+    --light-card-bg: #ffffff;
+    --header-bg: #fafafa;
     --header-border: #e9ecef;
-    --hover-bg: #e9ecef;
     --warning-color: #ffc107;
     --muted-color: #d6d6d6;
 }
@@ -42,7 +45,7 @@ header {
 }
 
 .navbar-brand img {
-    height: 60px;
+    height: 100px;
     display: inline-block;
     vertical-align: middle;
 }
@@ -91,6 +94,9 @@ header {
 
 /* Стили для карточек товаров */
 .card {
+    background-color: var(--light-card-bg);
+    border-radius: 10px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -99,8 +105,8 @@ header {
 }
 
 .card:hover {
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
     transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
 }
 
 .card-body {
@@ -163,6 +169,7 @@ footer p {
     position: relative;
     height: 0;
 }
+
 .map-responsive iframe {
     left: 0;
     top: 0;
@@ -180,5 +187,137 @@ footer p {
 
     .card {
         width: 100%;
+        margin-bottom: 20px;
     }
+}
+
+/* Темная тема */
+body.dark-theme {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+body.dark-theme header,
+body.dark-theme footer {
+    background-color: #1f1f1f;
+    color: #e0e0e0;
+    border-color: #333;
+}
+
+body.dark-theme .nav-link {
+    color: #b0bec5;
+}
+
+body.dark-theme .btn, body.dark-theme .form-select {
+    background-color: #424242;
+    color: #e0e0e0;
+    border: none;
+}
+
+body.dark-theme .btn:hover, body.dark-theme .form-select:hover {
+    background-color: #616161;
+}
+
+body.dark-theme .card {
+    background-color: #1f1f1f;
+    border-color: #333;
+}
+
+/* Обновление для кнопок и ссылок */
+body.dark-theme .btn-primary,
+body.dark-theme .btn-secondary {
+    background-color: #303f9f;
+    border-color: #303f9f;
+    color: #fff;
+}
+
+body.dark-theme .btn-primary:hover {
+    background-color: #1e3a8a;
+}
+
+/* Стикер для популярного товара */
+.sticker {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 5px 10px;
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #fff;
+    border-radius: 5px;
+    z-index: 10;
+}
+.bg-warning {
+    background-color: #ffc107 !important;
+}
+
+/* Стили для слайдера */
+.carousel-inner img {
+    width: 100%;
+    height: 500px; /* Установите нужную высоту */
+    object-fit: cover; /* Это позволит сохранить пропорции изображения */
+}
+
+/* Единый шрифт для всего текста */
+body, h1, h2, h3, h4, h5, p, a, .card-title, .card-text, .carousel-caption {
+    font-family: 'Roboto', Arial, sans-serif;
+    color: var(--text-color);
+}
+
+/* Единый размер шрифта */
+.card-title {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.card-text, .carousel-caption p {
+    font-size: 16px;
+}
+
+/* Стили для таблицы корзины */
+.table-hover tbody tr:hover {
+    background-color: var(--hover-bg);
+}
+
+.table thead th {
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+/* Стили для кнопок в корзине */
+.btn-primary, .btn-secondary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+}
+
+.btn-primary:hover, .btn-secondary:hover {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+
+/* Стили для пустой корзины */
+.empty-cart-message {
+    color: var(--text-color);
+    text-align: center;
+    font-size: 1.2em;
+    padding: 20px;
+}
+
+/* Стиль для переключателя тем */
+#theme-toggle {
+    background-color: transparent;
+    color: var(--primary-color);
+    border: none;
+    padding: 5px;
+    font-size: 1.2em;
+    transition: color 0.3s;
+}
+
+#theme-toggle:hover {
+    color: var(--secondary-color);
 }

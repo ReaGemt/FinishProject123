@@ -13,13 +13,16 @@
         {% if products %}
             {% for product in products %}
             <div class="col-md-4 mb-4">
-                <div class="card h-100">
+                <div class="card h-100 position-relative">
+                    {% if product.is_popular %}
+                        <div class="sticker bg-warning">Популярно</div>
+                    {% endif %}
                     {% if product.image %}
                         <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
                     {% else %}
                         <img src="{% static 'images/placeholder.png' %}" class="card-img-top" alt="Нет изображения" style="height: 200px; object-fit: cover;">
                     {% endif %}
-                    <div class="card-body">
+                    <div class="card-body text-center">
                         <h5 class="card-title">{{ product.name }}</h5>
                         <p class="card-text">{{ product.description|truncatewords:20 }}</p>
                         <p><strong>Цена: {{ product.price }} руб.</strong></p>
@@ -35,7 +38,10 @@
                                 {% endif %}
                             {% endfor %}
                         </p>
-                        <a href="{% url 'product_detail' product.id %}" class="btn btn-primary w-100">Подробнее</a>
+                        <a href="{% url 'product_detail' product.id %}" class="btn btn-primary w-100 mb-2">Подробнее</a>
+
+                        <!-- Кнопка добавления в корзину -->
+                        <a href="{% url 'add_to_cart' product.id %}" class="btn btn-secondary w-100">Добавить в корзину</a>
                     </div>
                 </div>
             </div>
@@ -49,4 +55,3 @@
     {% include 'pagination.html' %}
 </div>
 {% endblock %}
-

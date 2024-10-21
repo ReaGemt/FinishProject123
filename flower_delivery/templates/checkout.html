@@ -4,6 +4,11 @@
 {% block content %}
 <h2 class="text-center mb-4">Оформление заказа</h2>
 
+<!-- Прогресс-бар для отслеживания этапа оформления -->
+<div class="progress my-4">
+    <div class="progress-bar" role="progressbar" style="width: 50%;" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">Оформление заказа</div>
+</div>
+
 <!-- Проверка на наличие товаров в корзине -->
 {% if cart.cartitem_set.all %}
     <!-- Информация о корзине -->
