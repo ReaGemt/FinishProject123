@@ -4,15 +4,15 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from telegram import Bot
-from django.db import models
-from django.contrib.auth.models import User
+from django.utils.translation import gettext_lazy as _
+import os
 
 # Модель товара
 class Product(models.Model):
     CATEGORY_CHOICES = [
-        ('roses', 'Розы'),
-        ('tulips', 'Тюльпаны'),
-        ('orchids', 'Орхидеи'),
+        ('roses', _('Розы')),
+        ('tulips', _('Тюльпаны')),
+        ('orchids', _('Орхидеи')),
     ]
 
     name = models.CharField(max_length=200)
@@ -27,6 +27,10 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        verbose_name = _('Продукт')
+        verbose_name_plural = _('Продукты')
+
 # Модель корзины
 class Cart(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -37,6 +41,10 @@ class Cart(models.Model):
 
     def get_total(self):
         return sum(item.get_total_price() for item in self.items.all())
+
+    class Meta:
+        verbose_name = _('Корзина')
+        verbose_name_plural = _('Корзины')
 
 # Модель элемента корзины
 class CartItem(models.Model):
@@ -50,14 +58,18 @@ class CartItem(models.Model):
     def __str__(self):
         return f"{self.quantity} of {self.product.name}"
 
+    class Meta:
+        verbose_name = _('Элемент корзины')
+        verbose_name_plural = _('Элементы корзины')
+
 # Модель заказа
 class Order(models.Model):
     STATUS_CHOICES = [
-        ('pending', 'Ожидание'),
-        ('confirmed', 'Подтверждено'),
-        ('shipped', 'Отправлено'),
-        ('delivered', 'Доставлено'),
-        ('canceled', 'Отменено'),
+        ('pending', _('Ожидание')),
+        ('confirmed', _('Подтверждено')),
+        ('shipped', _('Отправлено')),
+        ('delivered', _('Доставлено')),
+        ('canceled', _('Отменено')),
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
@@ -66,7 +78,11 @@ class Order(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f'Order {self.id} - {self.status}'
+        return f'Заказ {self.id} - {self.status}'
+
+    class Meta:
+        verbose_name = _('Заказ')
+        verbose_name_plural = _('Заказы')
 
 # Модель элемента заказа
 class OrderItem(models.Model):
@@ -77,6 +93,13 @@ class OrderItem(models.Model):
     def __str__(self):
         return f"{self.quantity} of {self.product.name}"
 
+    def get_total_price(self):
+        return self.product.price * self.quantity
+
+    class Meta:
+        verbose_name = _('Элемент заказа')
+        verbose_name_plural = _('Элементы заказа')
+
 # Модель отзыва
 class Review(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -86,10 +109,14 @@ class Review(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Review by {self.user} on {self.product}"
+        return f"Отзыв от {self.user} на {self.product}"
+
+    class Meta:
+        verbose_name = _('Отзыв')
+        verbose_name_plural = _('Отзывы')
 
 # Telegram Bot Integration
-TELEGRAM_BOT_TOKEN = 'ВАШ_ТОКЕН_БОТА'
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 @receiver(post_save, sender=Order)
 def send_order_status_update(sender, instance, **kwargs):

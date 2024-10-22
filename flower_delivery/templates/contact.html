@@ -11,7 +11,7 @@
         <p>Или написать нам на email: <strong>info@flowerdelivery.ru</strong></p>
         <p>Наш адрес: <strong>г. Москва, ул. Цветочная, 5</strong></p>
 
-        <!-- Добавьте форму обратной связи (опционально) -->
+        <!-- Добавляем форму обратной связи с reCAPTCHA -->
         <h5 class="mt-4">Оставьте нам сообщение:</h5>
         <form method="post" action="{% url 'send_message' %}">
             {% csrf_token %}
@@ -27,6 +27,8 @@
                 <label for="message">Ваше сообщение</label>
                 <textarea class="form-control" name="message" rows="4" required></textarea>
             </div>
+            <!-- Добавляем reCAPTCHA -->
+            <div class="g-recaptcha" data-sitekey="ВАШ_SITE_KEY"></div>
             <button type="submit" class="btn btn-primary">Отправить</button>
         </form>
     </div>
@@ -40,4 +42,7 @@
         </div>
     </div>
 </div>
+
+<!-- Скрипт reCAPTCHA -->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 {% endblock %}

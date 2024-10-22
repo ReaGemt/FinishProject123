@@ -35,6 +35,7 @@
                             <th>Номер заказа</th>
                             <th>Дата заказа</th>
                             <th>Общая сумма</th>
+                            <th>Статус</th> <!-- Новая колонка для статуса -->
                         </tr>
                     </thead>
                     <tbody>
@@ -43,6 +44,16 @@
                             <td><a href="{% url 'order_detail' order.id %}">{{ order.id }}</a></td>
                             <td>{{ order.created_at|date:"d.m.Y H:i" }}</td>
                             <td>{{ order.total_price }} руб.</td>
+                            <td>
+                                <span class="badge
+                                    {% if order.status == 'pending' %} bg-warning
+                                    {% elif order.status == 'confirmed' %} bg-primary
+                                    {% elif order.status == 'shipped' %} bg-info
+                                    {% elif order.status == 'delivered' %} bg-success
+                                    {% else %} bg-danger {% endif %}">
+                                    {{ order.get_status_display }}
+                                </span>
+                            </td> <!-- Отображение статуса с меткой (badge) -->
                         </tr>
                         {% endfor %}
                     </tbody>

@@ -43,7 +43,7 @@
         {% csrf_token %}
         <div class="form-group mb-3">
             <label for="address">Адрес доставки</label>
-            <input type="text" name="address" class="form-control" required>
+            <input type="text" name="address" id="address" class="form-control" required placeholder="Введите адрес">
         </div>
 
         <!-- Новое поле для комментариев к заказу -->
@@ -60,4 +60,29 @@
         <a href="{% url 'catalog' %}" class="btn btn-secondary">Вернуться в каталог</a>
     </div>
 {% endif %}
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const addressInput = document.getElementById("address");
+    addressInput.addEventListener("input", function() {
+        fetch("/dadata/suggest-address/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}",
+            },
+            body: JSON.stringify({ query: addressInput.value })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Логика для автозаполнения выпадающего списка
+            if (data.suggestions) {
+                console.log(data.suggestions);
+                // Здесь можно реализовать отображение предложений и выбор подходящего адреса.
+            }
+        })
+        .catch(error => console.error('Ошибка:', error));
+    });
+});
+</script>
 {% endblock %}

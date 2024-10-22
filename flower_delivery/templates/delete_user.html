@@ -23,9 +23,9 @@
                     <p class="text-danger"><small>Эта операция необратима, и все связанные данные будут потеряны.</small></p>
                 </div>
                 <div class="modal-footer">
-                    <form method="POST">
+                    <form method="POST" action="{% url 'delete_user' user.id %}">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-danger">Удалить</button>
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Вы уверены, что хотите удалить этого пользователя?');">Удалить</button>
                     </form>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
                 </div>
@@ -34,3 +34,4 @@
     </div>
 </div>
 {% endblock %}
+

@@ -36,6 +36,7 @@
                         {% else %}
                             <a class="nav-link" href="{% url 'login' %}">Войти</a>
                             <a class="nav-link" href="{% url 'register' %}">Регистрация</a>
+                            <a class="nav-link" href="{% url 'order_history' %}">История заказов</a>
                         {% endif %}
                     </nav>
                     <button id="theme-toggle" class="btn btn-sm">
@@ -120,5 +121,53 @@
             themeToggleButton.innerHTML = isDark ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
         });
     </script>
+
+    <!-- Баннер для согласия на использование cookies -->
+    <div id="cookie-consent" class="cookie-consent-banner">
+        <p>Мы используем cookies, чтобы улучшить работу сайта. Продолжая использовать сайт, вы соглашаетесь с нашей <a href="{% url 'privacy_policy' %}">Политикой конфиденциальности</a>.</p>
+        <button id="accept-cookies" class="btn btn-primary">Принять</button>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const cookieBanner = document.getElementById("cookie-consent");
+            const acceptButton = document.getElementById("accept-cookies");
+
+            // Проверка, если cookie с согласием уже установлено
+            if (!document.cookie.split(';').some((item) => item.trim().startsWith('cookiesAccepted='))) {
+                cookieBanner.style.display = "block";
+            }
+
+            // Установка cookie при нажатии на кнопку
+            acceptButton.addEventListener("click", function() {
+                document.cookie = "cookiesAccepted=true; path=/; max-age=" + (60 * 60 * 24 * 365); // cookie на 1 год
+                cookieBanner.style.display = "none";
+            });
+        });
+    </script>
+
+    <style>
+        .cookie-consent-banner {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            text-align: center;
+            padding: 15px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .cookie-consent-banner p {
+            margin: 0;
+        }
+
+        .cookie-consent-banner a {
+            color: #ffc107;
+            text-decoration: underline;
+        }
+    </style>
 </body>
 </html>
+

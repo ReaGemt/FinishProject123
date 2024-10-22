@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container mt-4">
     <h2 class="mb-4">Редактирование продукта: {{ form.instance.name }}</h2>
-
+    <a href="{% url 'edit_product' product.id %}" class="btn btn-secondary">Редактировать</a>
     <!-- Показать сообщения об ошибках, если есть -->
     {% if form.errors %}
     <div class="alert alert-danger">

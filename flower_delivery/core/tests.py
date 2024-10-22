@@ -3,10 +3,6 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from .models import Product, Cart, CartItem, Order, OrderItem
 
-# Инициализация Django для каждого файла теста
-import django
-django.setup()
-
 class ProductModelTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='testuser', password='password')
@@ -82,5 +78,13 @@ class UserAuthTests(TestCase):
     def test_create_order_authenticated(self):
         user = User.objects.create_user(username='testuser', password='password')
         self.client.login(username='testuser', password='password')
-        response = self.client.post('/add_to_cart/1/', {'quantity': 1})
-        self.assertEqual(response.status_code, 302)
+        # Создание продукта для добавления в корзину
+        product = Product.objects.create(
+            name='Розы',
+            description='Красные розы',
+            price=50.00,
+            category='roses',
+            created_by=user
+        )
+        response = self.client.post(f'/add_to_cart/{product.id}/', {'quantity': 1})
+        self.assertEqual(response.status_code, 302)  # Ожидание успешного редиректа

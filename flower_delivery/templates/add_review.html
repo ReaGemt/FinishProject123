@@ -21,11 +21,11 @@
 
         <div class="form-group mb-3">
             <label for="rating">Рейтинг</label>
-            <input type="number" name="rating" min="1" max="5" class="form-control" required style="width: 100px;">
+            <input type="number" name="rating" id="rating" min="1" max="5" class="form-control" required style="width: 100px;">
         </div>
         <div class="form-group mb-3">
             <label for="comment">Комментарий</label>
-            <textarea name="comment" rows="5" class="form-control" required></textarea>
+            <textarea name="comment" id="comment" rows="5" class="form-control" required></textarea>
         </div>
         <div class="d-flex justify-content-between">
             <button type="submit" class="btn btn-primary mt-3">Отправить отзыв</button>
@@ -34,4 +34,5 @@
     </form>
 </div>
 {% endblock %}
+
 

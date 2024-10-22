@@ -12,13 +12,13 @@ class OrderTests(TestCase):
         self.client.login(username='testuser', password='password123')
         self.client.post(reverse('add_to_cart', args=[self.product.id]))
         response = self.client.post(reverse('checkout'), {'address': 'Test Address'})
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)  # Проверяем, что произошел редирект (успешное оформление заказа)
         order = Order.objects.filter(user=self.user).first()
-        self.assertTrue(order)
-        self.assertEqual(order.orderitem_set.first().product.name, "Роза")
+        self.assertTrue(order)  # Проверяем, что заказ был создан
+        self.assertEqual(order.orderitem_set.first().product.name, "Роза")  # Проверяем, что заказ содержит правильный товар
 
     def test_order_with_empty_cart(self):
         self.client.login(username='testuser', password='password123')
         response = self.client.post(reverse('checkout'), {'address': 'Test Address'})
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Your cart is empty.")
+        self.assertEqual(response.status_code, 200)  # Проверка, что страница не перенаправляется
+        self.assertContains(response, "Ваша корзина пуста.")  # Убедитесь, что сообщение об ошибке отображается

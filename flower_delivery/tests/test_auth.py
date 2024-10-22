@@ -25,7 +25,7 @@ class UserAuthTests(TestCase):
             'email': 'test@example.com'
         })
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "The two password fields didn’t match.")
+        self.assertContains(response, "Пароли не совпадают.")
 
     def test_user_login(self):
         User.objects.create_user(username='testuser', password='password123')
@@ -42,4 +42,4 @@ class UserAuthTests(TestCase):
             'password': 'wrongpassword'
         })
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Please enter a correct username and password.")
+        self.assertContains(response, "Пожалуйста, введите правильное имя пользователя и пароль.")

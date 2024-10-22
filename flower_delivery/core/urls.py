@@ -48,6 +48,7 @@ urlpatterns = [
     # Дополнительно: Отправка сообщения
     path("send_message/", views.send_message, name="send_message"),
     path('profile/edit/', views.edit_profile, name='edit_profile'),
-    path('change_language/', views.change_language, name='change_language'),
     path('change_currency/', views.change_currency, name='change_currency'),
+    path('privacy-policy/', views.privacy_policy, name='privacy_policy'),
+    path('dadata/suggest-address/', views.suggest_address, name='suggest_address'),
 ]
