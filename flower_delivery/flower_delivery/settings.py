@@ -107,9 +107,9 @@ LOGOUT_REDIRECT_URL = '/'
 
 # Настройки SMTP для отправки писем
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'  # Для Gmail
-EMAIL_PORT = 587
+EMAIL_HOST = 'smtp.yandex.ru'
+EMAIL_PORT = 465
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'your_email@gmail.com'  # Замените на ваш email
-EMAIL_HOST_PASSWORD = 'your_password'  # Замените на ваш пароль
-DEFAULT_FROM_EMAIL = 'your_email@gmail.com'
+EMAIL_HOST_USER = 'operator@ikc-tt.ru'  # Замените на ваш email
+EMAIL_HOST_PASSWORD = 'iM6bp@Kjf38LG6D'  # Замените на ваш пароль
+DEFAULT_FROM_EMAIL = 'operator@ikc-tt.ru'

@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from telegram import Bot
+from django.db import models
+from django.contrib.auth.models import User
 
 # Модель товара
 class Product(models.Model):
@@ -78,12 +80,13 @@ class OrderItem(models.Model):
 # Модель отзыва
 class Review(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    review_text = models.TextField()
-    rating = models.PositiveIntegerField(default=5)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    rating = models.IntegerField()
+    comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Review for {self.product.name} by {self.id}"
+        return f"Review by {self.user} on {self.product}"
 
 # Telegram Bot Integration
 TELEGRAM_BOT_TOKEN = 'ВАШ_ТОКЕН_БОТА'

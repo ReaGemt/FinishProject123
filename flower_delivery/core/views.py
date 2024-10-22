@@ -1,5 +1,7 @@
 # core/views.py
-
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import Review, Product
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.paginator import Paginator
@@ -17,6 +19,9 @@ from django.shortcuts import redirect
 from django.utils import translation
 from django.shortcuts import redirect, get_object_or_404
 from .models import Product, Cart, CartItem
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import Review, Product
 
 def product_list(request):
     category = request.GET.get('category')
@@ -96,12 +101,30 @@ def order_history(request):
 @login_required
 def add_review(request, product_id):
     product = get_object_or_404(Product, id=product_id)
+
     if request.method == 'POST':
         rating = request.POST.get('rating')
         comment = request.POST.get('comment')
-        Review.objects.create(product=product, user=request.user, rating=rating, comment=comment)
-        messages.success(request, 'Ваш отзыв добавлен.')
-        return redirect('product_detail', product_id=product.id)
+
+        # Проверка корректности данных
+        if rating and comment and 1 <= int(rating) <= 5:
+            # Создание нового отзыва
+            Review.objects.create(
+                product=product,
+                user=request.user,
+                rating=int(rating),
+                comment=comment
+            )
+            # Перенаправление обратно на страницу продукта
+            return redirect('product_detail', product_id=product.id)
+        else:
+            # Если данные некорректные, отображаем форму с ошибкой
+            return render(request, 'add_review.html', {
+                'product': product,
+                'form': request.POST,
+                'errors': "Некорректные данные. Пожалуйста, укажите правильный рейтинг (от 1 до 5) и комментарий."
+            })
+
     return render(request, 'add_review.html', {'product': product})
 
 
