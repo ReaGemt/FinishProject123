@@ -33,3 +33,22 @@ class CartTests(TestCase):
     def test_add_nonexistent_product_to_cart(self):
         response = self.client.post(reverse('add_to_cart', args=[999]))
         self.assertEqual(response.status_code, 404)
+
+class ExtendedCartTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='password123')
+        self.product = Product.objects.create(name="Роза", price=100.00)
+        self.client.login(username='testuser', password='password123')
+
+    def test_add_existing_product_increases_quantity(self):
+        self.client.post(reverse('add_to_cart', args=[self.product.id]))
+        self.client.post(reverse('add_to_cart', args=[self.product.id]))
+        cart = Cart.objects.get(user=self.user)
+        cart_item = CartItem.objects.get(cart=cart, product=self.product)
+        self.assertEqual(cart_item.quantity, 2)
+
+    def test_add_different_quantities(self):
+        response = self.client.post(reverse('add_to_cart', args=[self.product.id]), {'quantity': 5})
+        cart = Cart.objects.get(user=self.user)
+        cart_item = CartItem.objects.get(cart=cart, product=self.product)
+        self.assertEqual(cart_item.quantity, 5)

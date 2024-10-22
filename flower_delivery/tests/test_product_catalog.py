@@ -35,3 +35,26 @@ class ProductCatalogTests(TestCase):
         self.assertContains(response, "Цветок 5")
         # Убедитесь, что создано всего 12 продуктов и пагинация разделила их на несколько страниц
         self.assertNotContains(response, "Цветок 6")
+
+
+class ExtendedOrderTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='password123')
+        self.product = Product.objects.create(name="Роза", price=100.00)
+        self.client.login(username='testuser', password='password123')
+
+    def test_order_creation_with_comment(self):
+        self.client.post(reverse('add_to_cart', args=[self.product.id]))
+        response = self.client.post(reverse('checkout'), {
+            'address': 'Test Address',
+            'comments': 'Пожалуйста, доставьте к 5 часам.'
+        })
+        self.assertEqual(response.status_code, 302)
+        order = Order.objects.filter(user=self.user).first()
+        self.assertTrue(order)
+        self.assertEqual(order.comments, 'Пожалуйста, доставьте к 5 часам.')
+
+    def test_empty_cart_prevents_order(self):
+        response = self.client.post(reverse('checkout'), {'address': 'Test Address'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Ваша корзина пуста")

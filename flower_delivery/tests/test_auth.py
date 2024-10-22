@@ -43,3 +43,35 @@ class UserAuthTests(TestCase):
         })
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Пожалуйста, введите правильное имя пользователя и пароль.")
+
+
+class ExtendedUserAuthTests(TestCase):
+    def test_registration_with_existing_username(self):
+        User.objects.create_user(username='testuser', password='password123', email='test@example.com')
+        response = self.client.post(reverse('register'), {
+            'username': 'testuser',
+            'password1': 'password123',
+            'password2': 'password123',
+            'email': 'new@example.com'
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Пользователь с таким именем уже существует.")
+
+    def test_password_reset(self):
+        user = User.objects.create_user(username='testuser', password='password123', email='test@example.com')
+        response = self.client.post(reverse('password_reset'), {
+            'email': 'test@example.com'
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertContains(response, "Проверьте вашу почту для дальнейших инструкций.")
+
+    def test_update_profile(self):
+        user = User.objects.create_user(username='testuser', password='password123')
+        self.client.login(username='testuser', password='password123')
+        response = self.client.post(reverse('edit_profile'), {
+            'username': 'updateduser',
+            'email': 'updated@example.com'
+        })
+        user.refresh_from_db()
+        self.assertEqual(user.username, 'updateduser')
+        self.assertEqual(user.email, 'updated@example.com')

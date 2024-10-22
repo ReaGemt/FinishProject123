@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
+import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -109,3 +110,10 @@ DADATA_SECRET_KEY = os.getenv('DADATA_SECRET_KEY', 'ваш_секретный_к
 # reCAPTCHA ключи
 RECAPTCHA_SITE_KEY = os.getenv('RECAPTCHA_SITE_KEY')
 RECAPTCHA_SECRET_KEY = os.getenv('RECAPTCHA_SECRET_KEY')
+
+
+env = environ.Env()
+environ.Env.read_env()
+
+# Загрузите токен из переменной окружения
+TELEGRAM_BOT_TOKEN = env("TELEGRAM_BOT_TOKEN")
