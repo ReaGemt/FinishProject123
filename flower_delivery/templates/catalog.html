@@ -18,9 +18,9 @@
                         <div class="sticker bg-warning">Популярно</div>
                     {% endif %}
                     {% if product.image %}
-                        <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
+                        <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 240px; object-fit: cover;">
                     {% else %}
-                        <img src="{% static 'images/placeholder.png' %}" class="card-img-top" alt="Нет изображения" style="height: 200px; object-fit: cover;">
+                        <img src="{% static 'images/placeholder.png' %}" class="card-img-top" alt="Нет изображения" style="height: 240px; object-fit: cover;">
                     {% endif %}
                     <div class="card-body text-center">
                         <h5 class="card-title">{{ product.name }}</h5>
@@ -41,7 +41,7 @@
                         <a href="{% url 'product_detail' product.id %}" class="btn btn-primary w-100 mb-2">Подробнее</a>
 
                         <!-- Кнопка добавления в корзину -->
-                        <a href="{% url 'add_to_cart' product.id %}" class="btn btn-primary">Добавить в корзину</a>
+                        <button class="btn btn-primary add-to-cart-btn" data-product-id="{{ product.id }}">Добавить в корзину</button>
                     </div>
                 </div>
             </div>
@@ -54,5 +54,35 @@
     <!-- Пагинация внизу каталога -->
     {% include 'pagination.html' %}
 </div>
-{% endblock %}
 
+<script>
+    document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const productId = this.getAttribute('data-product-id');
+            const quantity = 1; // Установить желаемое количество для быстрого добавления
+
+            fetch(`/add_to_cart/${productId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'x-requested-with': 'XMLHttpRequest',
+                },
+                body: `quantity=${quantity}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    showCartPopup(); // Показать всплывающее окно
+                }
+            });
+        });
+    });
+
+    function showCartPopup() {
+        if (confirm("Товар добавлен в корзину. Перейти в корзину?")) {
+            window.location.href = "{% url 'view_cart' %}";
+        }
+    }
+</script>
+{% endblock %}

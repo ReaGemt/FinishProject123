@@ -15,6 +15,7 @@ from django.conf import settings
 import json
 import requests
 
+
 # Utility functions
 def is_manager(user):
     """Проверяет, является ли пользователь менеджером или администратором."""
@@ -34,23 +35,27 @@ def product_list(request):
     page_obj = paginator.get_page(page_number)
     return render(request, 'catalog.html', {'page_obj': page_obj, 'products': page_obj.object_list, 'is_paginated': True})
 
-
 @login_required
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    cart, created = Cart.objects.get_or_create(user=request.user)
+    cart, _ = Cart.objects.get_or_create(user=request.user)
+    quantity = int(request.POST.get('quantity', 1))
 
-    # Получаем или создаем элемент корзины
+    # Получение или создание элемента корзины
     cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
     if not created:
-        cart_item.quantity += 1
+        cart_item.quantity += quantity  # Увеличиваем количество, если товар уже есть в корзине
+    else:
+        cart_item.quantity = quantity  # Устанавливаем количество для нового товара
     cart_item.save()
 
-    # Добавление отладочных сообщений
-    print(
-        f"Добавлено в корзину: {cart_item.product.name}, количество: {cart_item.quantity}, пользователь: {request.user}")
+    message = f'Товар "{product.name}" добавлен в корзину. Количество: {cart_item.quantity}.'
 
-    messages.success(request, 'Товар добавлен в корзину.')
+    # Проверка на AJAX-запрос
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'message': message})
+
+    # Обычный редирект, если запрос не был через AJAX
     return redirect('view_cart')
 
 @login_required
@@ -59,11 +64,6 @@ def view_cart(request):
     cart_items = cart.items.all()  # Правильный доступ к элементам корзины
     print(cart_items)
     return render(request, 'cart.html', {'cart': cart, 'cart_items': cart_items})
-
-
-
-
-
 
 @login_required
 def update_cart_item(request, item_id):
@@ -91,17 +91,29 @@ def remove_cart_item(request, item_id):
     messages.success(request, 'Товар удалён из корзины.')
     return redirect('view_cart')
 
+
 @login_required
 def checkout(request):
-    cart, _ = Cart.objects.get_or_create(user=request.user)
+    cart, created = Cart.objects.get_or_create(user=request.user)
+
+    # Проверка, есть ли товары в корзине
+    if not cart.items.exists():
+        messages.error(request, 'Ваша корзина пуста. Пожалуйста, добавьте товары перед оформлением заказа.')
+        return redirect('view_cart')
+
     if request.method == "POST":
         address = request.POST.get('address')
-        order = Order.objects.create(user=request.user, address=address)
+
+        # Создание заказа
+        order = Order.objects.create(user=request.user)
         for item in cart.items.all():
             OrderItem.objects.create(order=order, product=item.product, quantity=item.quantity)
+
+        # Очистка корзины после оформления заказа
         cart.items.all().delete()
         messages.success(request, 'Ваш заказ успешно оформлен.')
         return redirect('order_success')
+
     return render(request, 'checkout.html', {'cart': cart})
 
 @login_required

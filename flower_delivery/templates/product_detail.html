@@ -16,12 +16,17 @@
         <p>{{ product.description }}</p>
         <p><strong>Цена: {{ product.price }} ₽</strong></p>
         <p id="total-price"><strong>Итого: {{ product.price }} ₽</strong></p>
-        <form method="POST" action="{% url 'add_to_cart' product.id %}">
+        <form method="POST" action="{% url 'add_to_cart' product.id %}" id="add-to-cart-form">
             {% csrf_token %}
             <label for="quantity">Количество:</label>
             <input type="number" name="quantity" id="quantity" value="1" min="1" class="form-control mb-3" style="width: 100px;" onchange="updateTotal({{ product.price }})">
-            <button type="submit" class="btn btn-success">Добавить в корзину</button>
+            <button type="button" class="btn btn-success" id="add-to-cart-btn">Добавить в корзину</button>
         </form>
+        <div id="cart-message" class="alert alert-info mt-3" style="display: none;">
+            <span id="cart-message-text"></span>
+            <a href="{% url 'view_cart' %}" class="btn btn-primary btn-sm">Перейти в корзину</a>
+            <button class="btn btn-secondary btn-sm" onclick="hideCartMessage()">Продолжить покупки</button>
+        </div>
     </div>
 </div>
 
@@ -32,7 +37,7 @@
     <ul class="list-group">
         {% for review in product.review_set.all %}
         <li class="list-group-item">
-            <p>{{ review.review_text }}</p>
+            <p>{{ review.comment }}</p> <!-- Используем 'comment' вместо 'review_text' -->
             <small>Рейтинг: {{ review.rating }}/5 - {{ review.created_at|date:"d.m.Y" }}</small>
         </li>
         {% endfor %}
@@ -50,14 +55,30 @@
         document.getElementById("total-price").innerText = `Итого: ${totalPrice.toFixed(2)} ₽`;
     }
 
-    // Ensure quantity is sent correctly
-    document.querySelector('form').onsubmit = function() {
-        const quantityInput = document.getElementById('quantity');
-        if (!quantityInput.value || quantityInput.value <= 0) {
-            alert('Пожалуйста, введите корректное количество.');
-            return false;
-        }
-    };
+    // AJAX-запрос для добавления товара в корзину
+    document.getElementById('add-to-cart-btn').addEventListener('click', function() {
+        const form = document.getElementById('add-to-cart-form');
+        const formData = new FormData(form);
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                document.getElementById('cart-message-text').textContent = data.message;
+                document.getElementById('cart-message').style.display = 'block';
+            }
+        })
+        .catch(error => console.error('Ошибка:', error));
+    });
+
+    function hideCartMessage() {
+        document.getElementById('cart-message').style.display = 'none';
+    }
 </script>
 {% endblock %}
-

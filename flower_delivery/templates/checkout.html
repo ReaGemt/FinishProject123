@@ -1,4 +1,5 @@
 <!-- templates/checkout.html -->
+<!-- templates/checkout.html -->
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
@@ -10,7 +11,7 @@
 </div>
 
 <!-- Проверка на наличие товаров в корзине -->
-{% if cart.cartitem_set.all %}
+{% if cart.items.all %}
     <!-- Информация о корзине -->
     <div class="table-responsive mb-4">
         <table class="table table-hover">
@@ -23,7 +24,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for item in cart.cartitem_set.all %}
+                {% for item in cart.items.all %}
                 <tr>
                     <td>{{ item.product.name }}</td>
                     <td>{{ item.quantity }}</td>
@@ -86,3 +87,4 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 {% endblock %}
+
