@@ -27,27 +27,43 @@ def is_admin(user):
 def product_list(request):
     category = request.GET.get('category')
     products = Product.objects.filter(category=category) if category else Product.objects.all()
+    # Добавьте сортировку по умолчанию (например, по имени или дате создания)
+    products = products.order_by('name')  # или 'created_at', если это более подходящий вариант
     paginator = Paginator(products, 6)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     return render(request, 'catalog.html', {'page_obj': page_obj, 'products': page_obj.object_list, 'is_paginated': True})
 
+
 @login_required
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    cart, _ = Cart.objects.get_or_create(user=request.user)
+    cart, created = Cart.objects.get_or_create(user=request.user)
 
+    # Получаем или создаем элемент корзины
     cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
     if not created:
         cart_item.quantity += 1
     cart_item.save()
 
+    # Добавление отладочных сообщений
+    print(
+        f"Добавлено в корзину: {cart_item.product.name}, количество: {cart_item.quantity}, пользователь: {request.user}")
+
+    messages.success(request, 'Товар добавлен в корзину.')
     return redirect('view_cart')
 
 @login_required
 def view_cart(request):
     cart, _ = Cart.objects.get_or_create(user=request.user)
-    return render(request, 'cart.html', {'cart': cart})
+    cart_items = cart.items.all()  # Правильный доступ к элементам корзины
+    print(cart_items)
+    return render(request, 'cart.html', {'cart': cart, 'cart_items': cart_items})
+
+
+
+
+
 
 @login_required
 def update_cart_item(request, item_id):

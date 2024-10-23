@@ -120,7 +120,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
+flower_delivery/.env
 .venv
 env/
 venv/

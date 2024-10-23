@@ -1,3 +1,4 @@
+# flower_delivery\bot\telegram_bot.py
 import os
 import sys
 import django
@@ -9,10 +10,12 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'flower_delivery.settings')
 django.setup()
 
-from telegram import Update, Bot, ReplyKeyboardMarkup, KeyboardButton
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
-from django.conf import settings
 from core.models import Product, Order, OrderItem, User
+from django.conf import settings
+from asgiref.sync import sync_to_async
+
 
 # Загружаем токен из переменных окружения через настройки Django
 TELEGRAM_BOT_TOKEN = settings.TELEGRAM_BOT_TOKEN
@@ -32,8 +35,8 @@ async def start(update: Update, context: CallbackContext) -> None:
 
 # Обработчик команды /catalog для отображения доступных товаров
 async def send_catalog(update: Update, context: CallbackContext) -> None:
-    products = Product.objects.all()
-    if products.exists():
+    products = await sync_to_async(list)(Product.objects.all())  # Преобразуем в список с помощью sync_to_async
+    if products:
         catalog_message = "Доступные цветы:\n"
         for product in products:
             catalog_message += f"{product.name} - {product.price} руб.\n"
@@ -43,14 +46,14 @@ async def send_catalog(update: Update, context: CallbackContext) -> None:
 
 # Обработчик команды /status
 async def check_status(update: Update, context: CallbackContext) -> None:
-    user = User.objects.filter(username=update.message.from_user.username).first()
+    user = await sync_to_async(lambda: User.objects.filter(username=update.message.from_user.username).first())()
     if user:
-        orders = Order.objects.filter(user=user).order_by('-created_at')
-        if orders.exists():
+        orders = await sync_to_async(list)(Order.objects.filter(user=user).order_by('-created_at'))
+        if orders:
             message = "Ваши заказы:\n"
             for order in orders:
                 status = order.get_status_display()
-                products = ", ".join([f"{item.product.name} x{item.quantity}" for item in order.orderitem_set.all()])
+                products = ", ".join([f"{item.product.name} x{item.quantity}" for item in await sync_to_async(list)(order.orderitem_set.all())])
                 message += f"Заказ {order.id}: {products} - Статус: {status}\n"
             await update.message.reply_text(message)
         else:
@@ -58,16 +61,17 @@ async def check_status(update: Update, context: CallbackContext) -> None:
     else:
         await update.message.reply_text("Вы не зарегистрированы в системе. Пожалуйста, сначала сделайте заказ, чтобы создать учетную запись.")
 
+
 # Обновление обработчика заказов с улучшенной обработкой ошибок
 async def handle_order(update: Update, context: CallbackContext) -> None:
     user_text = update.message.text
     try:
         product_name, quantity = user_text.split(',')
-        product = Product.objects.filter(name__iexact=product_name.strip()).first()
+        product = await sync_to_async(lambda: Product.objects.filter(name__iexact=product_name.strip()).first())()
         if product:
-            user, created = User.objects.get_or_create(username=update.message.from_user.username)
-            order = Order.objects.create(user=user, status='pending')
-            OrderItem.objects.create(order=order, product=product, quantity=int(quantity.strip()))
+            user, created = await sync_to_async(User.objects.get_or_create)(username=update.message.from_user.username)
+            order = await sync_to_async(Order.objects.create)(user=user, status='pending')
+            await sync_to_async(OrderItem.objects.create)(order=order, product=product, quantity=int(quantity.strip()))
             await update.message.reply_text(f"Ваш заказ на {quantity}x {product.name} успешно оформлен.")
         else:
             await update.message.reply_text("Товар не найден. Пожалуйста, проверьте название товара.")

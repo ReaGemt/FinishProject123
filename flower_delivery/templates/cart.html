@@ -1,9 +1,8 @@
-<!-- templates/cart.html -->
 {% extends 'base.html' %}
 {% block content %}
 <h2 class="text-center mb-4">Ваша корзина</h2>
 
-{% if cart.cartitem_set.all %}
+{% if cart_items %}
     <div class="table-responsive mb-4">
         <table class="table table-hover">
             <thead>
@@ -16,7 +15,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for item in cart.cartitem_set.all %}
+                {% for item in cart_items %}
                 <tr data-item-id="{{ item.id }}">
                     <td>{{ item.product.name }}</td>
                     <td>
@@ -72,4 +71,3 @@
     });
 </script>
 {% endblock %}
-
