@@ -51,4 +51,7 @@ urlpatterns = [
     path('change_currency/', views.change_currency, name='change_currency'),
     path('privacy-policy/', views.privacy_policy, name='privacy_policy'),
     path('dadata/suggest-address/', views.suggest_address, name='suggest_address'),
+    path('order/<int:order_id>/', views.order_detail, name='order_detail'),
+    path('cart/update/<int:item_id>/', views.update_cart_item, name='update_cart_item'),
+    path('profile/', views.profile, name='profile'),
 ]

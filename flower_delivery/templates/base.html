@@ -24,9 +24,9 @@
                 <div class="col text-end">
                     <nav class="nav">
                         <a class="nav-link" href="{% url 'catalog' %}"><i class="fas fa-seedling"></i> Каталог</a>
-                        <a class="nav-link" href="{% url 'about' %}"><i class="fas fa-info-circle"></i> О нас</a>
                         <a class="nav-link" href="{% url 'contact' %}"><i class="fas fa-envelope"></i> Контакты</a>
                         <a class="nav-link" href="{% url 'view_cart' %}"><i class="fas fa-shopping-cart"></i> Корзина</a>
+                        <a class="nav-link" href="{% url 'about' %}"><i class="fas fa-info-circle"></i> О нас</a>
                         {% if user.is_authenticated %}
                             <a class="nav-link" href="{% url 'profile' %}"><i class="fas fa-user"></i> Личный кабинет</a>
                             <a class="nav-link" href="#" onclick="document.getElementById('logout-form').submit();"><i class="fas fa-sign-out-alt"></i> Выйти</a>

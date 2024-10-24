@@ -10,11 +10,11 @@ from django.core.mail import send_mail
 from django.contrib import messages
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from dadata import Dadata
-from django.conf import settings
 import json
 import requests
-
+from dadata import Dadata
+from django.conf import settings
+import os
 
 # Utility functions
 def is_manager(user):
@@ -65,24 +65,30 @@ def view_cart(request):
     print(cart_items)
     return render(request, 'cart.html', {'cart': cart, 'cart_items': cart_items})
 
+
 @login_required
 def update_cart_item(request, item_id):
-    cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
     if request.method == 'POST':
-        quantity = int(request.POST.get('quantity', 1))
-        if quantity > 0:
-            cart_item.quantity = quantity
+        cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+        data = json.loads(request.body)
+        new_quantity = data.get('quantity', 1)
+
+        # Проверяем, что количество валидное
+        if new_quantity.isdigit() and int(new_quantity) > 0:
+            cart_item.quantity = int(new_quantity)
             cart_item.save()
-            messages.success(request, 'Количество товара обновлено.')
+
+            cart_total = cart_item.cart.get_total()  # Обновляем итоговую сумму
+            item_total = cart_item.get_total_price()
+
+            return JsonResponse({
+                'success': True,
+                'cart_total': cart_total,
+                'item_total': item_total
+            })
         else:
-            cart_item.delete()
-            messages.success(request, 'Товар удалён из корзины.')
-        return JsonResponse({
-            'success': True,
-            'item_total': cart_item.get_total_price(),
-            'cart_total': cart_item.cart.get_total()
-        })
-    return JsonResponse({'success': False})
+            return JsonResponse({'success': False, 'error': 'Invalid quantity'})
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
 
 @login_required
 def remove_cart_item(request, item_id):
@@ -163,8 +169,7 @@ def register(request):
 
 @login_required
 def profile(request):
-    orders = Order.objects.filter(user=request.user)
-    return render(request, 'profile.html', {'orders': orders})
+    return render(request, 'profile.html')
 
 def about(request):
     return render(request, 'about.html')
@@ -311,12 +316,21 @@ def delete_user_account(request):
 
 def suggest_address(request):
     if request.method == 'POST':
-        dadata = Dadata(settings.DADATA_API_KEY, settings.DADATA_SECRET_KEY)
         query = request.POST.get('query')
-        suggestions = dadata.suggest("address", query)
-        return JsonResponse({'suggestions': suggestions})
+        if query:
+            api_url = "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address"
+            headers = {
+                "Authorization": f"Token {os.getenv('DADATA_API_TOKEN')}",
+                "Content-Type": "application/json",
+            }
+            data = {"query": query, "count": 5}
+            response = requests.post(api_url, json=data, headers=headers)
+            suggestions = response.json().get('suggestions', [])
+            return JsonResponse({'suggestions': suggestions})
+    return JsonResponse({'suggestions': []})
 
 @login_required
 def order_detail(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
-    return render(request, 'order_detail.html', {'order': order})
+    total_price = sum(item.get_total_price() for item in order.items.all())
+    return render(request, 'order_detail.html', {'order': order, 'total_price': total_price})

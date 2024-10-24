@@ -76,10 +76,8 @@ document.addEventListener("DOMContentLoaded", function() {
         })
         .then(response => response.json())
         .then(data => {
-            // Логика для автозаполнения выпадающего списка
             if (data.suggestions) {
-                console.log(data.suggestions);
-                // Здесь можно реализовать отображение предложений и выбор подходящего адреса.
+                console.log(data.suggestions); // Для проверки, что подсказки приходят
             }
         })
         .catch(error => console.error('Ошибка:', error));
