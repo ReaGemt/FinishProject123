@@ -4,6 +4,8 @@ from django.apps import apps
 from telegram import Bot
 from django.conf import settings
 from .utils import send_telegram_message
+from django.contrib.auth.models import User
+from .models import UserProfile
 
 # Отправка уведомления администратору о создании нового заказа
 @receiver(post_save)
@@ -31,3 +33,12 @@ def send_order_status_update(sender, instance, **kwargs):
                 print("Telegram chat ID не найден у пользователя.")
         else:
             print("Telegram Bot Token отсутствует.")
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.create(user=instance)
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    instance.profile.save()
