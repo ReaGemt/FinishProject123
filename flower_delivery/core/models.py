@@ -1,11 +1,9 @@
 # core/models.py
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-from telegram import Bot
 from django.utils.translation import gettext_lazy as _
 import os
+from django.conf import settings
 
 # Модель товара
 class Product(models.Model):
@@ -33,11 +31,14 @@ class Product(models.Model):
 
 # Модель корзины
 class Cart(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    products = models.ManyToManyField(Product, through='CartItem')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
+    session = models.CharField(max_length=40, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Корзина пользователя: {self.user.username}"
+        if self.user:
+            return f"Корзина пользователя: {self.user.username}"
+        return f"Корзина сессии: {self.session}"
 
     def get_total(self):
         return sum(item.get_total_price() for item in self.items.all())
@@ -72,7 +73,9 @@ class Order(models.Model):
         ('canceled', _('Отменено')),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders', null=True, blank=True)
+    address = models.CharField(max_length=255, null=True, blank=True)  # Сделать поле необязательным
+    comments = models.TextField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -117,20 +120,3 @@ class Review(models.Model):
 
 # Telegram Bot Integration
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-
-@receiver(post_save, sender=Order)
-def send_order_status_update(sender, instance, **kwargs):
-    if TELEGRAM_BOT_TOKEN:
-        bot = Bot(token=TELEGRAM_BOT_TOKEN)
-        user = instance.user
-        status = instance.get_status_display()
-
-        # Проверьте наличие telegram_chat_id у пользователя
-        if hasattr(user, 'profile') and user.profile.telegram_chat_id:
-            chat_id = user.profile.telegram_chat_id
-            message = f"Ваш заказ #{instance.id} обновлен. Новый статус: {status}."
-            bot.send_message(chat_id=chat_id, text=message)
-        else:
-            print("Telegram chat ID не найден у пользователя.")
-    else:
-        print("Telegram Bot Token отсутствует.")

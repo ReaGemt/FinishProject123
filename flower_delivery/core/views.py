@@ -6,15 +6,17 @@ from .forms import UserRegisterForm, UserUpdateForm, ProductForm
 from django.contrib.auth import login
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.models import User
-from django.core.mail import send_mail
 from django.contrib import messages
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 import json
 import requests
 from dadata import Dadata
-from django.conf import settings
 import os
+from telegram import Bot
+from django.core.mail import send_mail
+from django.conf import settings
+
 
 # Utility functions
 def is_manager(user):
@@ -35,10 +37,23 @@ def product_list(request):
     page_obj = paginator.get_page(page_number)
     return render(request, 'catalog.html', {'page_obj': page_obj, 'products': page_obj.object_list, 'is_paginated': True})
 
-@login_required
+
+def get_or_create_cart(request):
+    """Функция для получения или создания корзины с привязкой к пользователю или сессии"""
+    if request.user.is_authenticated:
+        cart, created = Cart.objects.get_or_create(user=request.user)
+    else:
+        # Используем идентификатор сессии
+        session_id = request.session.session_key
+        if not session_id:
+            request.session.create()
+            session_id = request.session.session_key
+        cart, created = Cart.objects.get_or_create(session=session_id)
+    return cart
+
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    cart, _ = Cart.objects.get_or_create(user=request.user)
+    cart = get_or_create_cart(request)
     quantity = int(request.POST.get('quantity', 1))
 
     # Получение или создание элемента корзины
@@ -58,11 +73,9 @@ def add_to_cart(request, product_id):
     # Обычный редирект, если запрос не был через AJAX
     return redirect('view_cart')
 
-@login_required
 def view_cart(request):
-    cart, _ = Cart.objects.get_or_create(user=request.user)
-    cart_items = cart.items.all()  # Правильный доступ к элементам корзины
-    print(cart_items)
+    cart = get_or_create_cart(request)
+    cart_items = cart.items.all()  # Доступ к элементам корзины
     return render(request, 'cart.html', {'cart': cart, 'cart_items': cart_items})
 
 
@@ -102,18 +115,37 @@ def remove_cart_item(request, item_id):
 def checkout(request):
     cart, created = Cart.objects.get_or_create(user=request.user)
 
-    # Проверка, есть ли товары в корзине
     if not cart.items.exists():
         messages.error(request, 'Ваша корзина пуста. Пожалуйста, добавьте товары перед оформлением заказа.')
         return redirect('view_cart')
 
     if request.method == "POST":
         address = request.POST.get('address')
+        comments = request.POST.get('comments', '')
 
         # Создание заказа
-        order = Order.objects.create(user=request.user)
+        order = Order.objects.create(user=request.user, address=address, comments=comments)
         for item in cart.items.all():
             OrderItem.objects.create(order=order, product=item.product, quantity=item.quantity)
+
+        # Формирование сообщения для уведомления
+        product_list = "\n".join([f"{item.product.name} x{item.quantity}" for item in cart.items.all()])
+        message = (
+            f"Новый заказ от {request.user.username}.\n"
+            f"Адрес: {address}\n"
+            f"Комментарии: {comments}\n"
+            f"Товары:\n{product_list}"
+        )
+
+        # Уведомление через телеграм-бота
+        if settings.ENABLE_TELEGRAM_NOTIFICATIONS and settings.TELEGRAM_BOT_TOKEN and settings.ADMIN_CHAT_ID:
+            bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
+            bot.send_message(chat_id=settings.ADMIN_CHAT_ID, text=message)
+
+        # Уведомление по email
+        if settings.ENABLE_EMAIL_NOTIFICATIONS:
+            subject = "Новый заказ на сайте"
+            send_mail(subject, message, settings.EMAIL_HOST_USER, [settings.ADMIN_EMAIL])
 
         # Очистка корзины после оформления заказа
         cart.items.all().delete()

@@ -19,11 +19,11 @@ class OrderAdmin(admin.ModelAdmin):
     ordering = ('-created_at',)
 
     def get_products(self, obj):
-        return ", ".join([item.product.name for item in obj.orderitem_set.all()])
+        return ", ".join([item.product.name for item in obj.items.all()])
     get_products.short_description = _('Товары')
 
     def get_user(self, obj):
-        return obj.user.username
+        return obj.user.username if obj.user else "Анонимный пользователь"
     get_user.short_description = _('Пользователь')
     verbose_name = _('Заказ')
     verbose_name_plural = _('Заказы')

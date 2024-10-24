@@ -55,6 +55,22 @@
         document.getElementById("total-price").innerText = `Итого: ${totalPrice.toFixed(2)} ₽`;
     }
 
+    // Получаем CSRF-токен из cookies
+    function getCSRFToken() {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, 10) === 'csrftoken=') {
+                    cookieValue = decodeURIComponent(cookie.substring(10));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
     // AJAX-запрос для добавления товара в корзину
     document.getElementById('add-to-cart-btn').addEventListener('click', function() {
         const form = document.getElementById('add-to-cart-form');
@@ -64,7 +80,8 @@
             method: 'POST',
             body: formData,
             headers: {
-                'X-Requested-With': 'XMLHttpRequest'
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCSRFToken()
             }
         })
         .then(response => response.json())

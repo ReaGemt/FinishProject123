@@ -3,11 +3,6 @@ from django.utils.translation import gettext_lazy as _
 import environ
 import os
 
-# Инициализация переменных окружения
-env = environ.Env()
-environ.Env.read_env('.env')
-TELEGRAM_BOT_TOKEN = env("TELEGRAM_BOT_TOKEN")
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-aj49+pk6yxa75+a2+nnmh3dwt61ycss^-655+v3z39&3dvmxu1')
@@ -23,8 +18,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'core',
+    'core.apps.CoreConfig',
     'widget_tweaks',
+    'dadata',
 ]
 
 MIDDLEWARE = [
@@ -94,14 +90,25 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGOUT_REDIRECT_URL = '/'
 LOGIN_REDIRECT_URL = '/'
 
+# Инициализация переменных окружения
+env = environ.Env()
+environ.Env.read_env('.env')
+
+# Telegram Bot Settings
+TELEGRAM_BOT_TOKEN = env("TELEGRAM_BOT_TOKEN", default="your_bot_token_here")
+ADMIN_TELEGRAM_CHAT_ID = env("ADMIN_TELEGRAM_CHAT_ID", default="your_admin_chat_id_here")
+ENABLE_TELEGRAM_NOTIFICATIONS = env.bool("ENABLE_TELEGRAM_NOTIFICATIONS", default=True)
+
 # SMTP настройки
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.yandex.ru'
 EMAIL_PORT = 465
-EMAIL_USE_SSL = True  # Изменено на SSL для порта 465
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'operator@ikc-tt.ru')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'iM6bp@Kjf38LG6D')
-DEFAULT_FROM_EMAIL = 'operator@ikc-tt.ru'
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL')
+ADMIN_EMAIL = env('ADMIN_EMAIL')
+ENABLE_EMAIL_NOTIFICATIONS = env.bool("ENABLE_EMAIL_NOTIFICATIONS", default=True)
 
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
@@ -111,10 +118,8 @@ CSRF_COOKIE_HTTPONLY = True
 COOKIE_CONSENT_NAME = 'cookiesAccepted'
 COOKIE_CONSENT_AGE_DAYS = 365
 
-DADATA_API_KEY = os.getenv('DADATA_API_KEY', 'ваш_ключ_авторизации')
-DADATA_SECRET_KEY = os.getenv('DADATA_SECRET_KEY', 'ваш_секретный_ключ')
+DADATA_API_KEY = env('DADATA_API_KEY')
+DADATA_SECRET_KEY = env('DADATA_SECRET_KEY')
 
-# reCAPTCHA ключи
-RECAPTCHA_SITE_KEY = os.getenv('RECAPTCHA_SITE_KEY')
-RECAPTCHA_SECRET_KEY = os.getenv('RECAPTCHA_SECRET_KEY')
-
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 1209600  # Две недели
