@@ -2,6 +2,10 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
 from .models import Product, Cart, CartItem, Order, OrderItem
+from django.db.models.signals import post_save
+from django.test import TestCase
+from .models import Order
+from unittest.mock import patch
 
 class ProductModelTests(TestCase):
     def setUp(self):
@@ -74,6 +78,9 @@ class UserAuthTests(TestCase):
         user = User.objects.create_user(username='testuser', password='password')
         login = self.client.login(username='testuser', password='password')
         self.assertTrue(login)
+        invalid_login = self.client.login(username='invaliduser', password='wrongpassword')
+        self.assertFalse(invalid_login)
+
 
     def test_create_order_authenticated(self):
         user = User.objects.create_user(username='testuser', password='password')
@@ -88,3 +95,11 @@ class UserAuthTests(TestCase):
         )
         response = self.client.post(f'/add_to_cart/{product.id}/', {'quantity': 1})
         self.assertEqual(response.status_code, 302)  # Ожидание успешного редиректа
+
+class OrderSignalTests(TestCase):
+    @patch('core.signals.send_telegram_message')
+    def test_notify_admin_order_created_signal(self, mock_send_message):
+        user = User.objects.create_user(username='testuser', password='password')
+        order = Order.objects.create(user=user, status='pending')
+        from flower_delivery.flower_delivery import settings
+        mock_send_message.assert_called_once_with(settings.ADMIN_TELEGRAM_CHAT_ID, f"Новый заказ создан: #{order.id} пользователем {user.username}.")

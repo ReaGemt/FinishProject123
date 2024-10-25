@@ -1,8 +1,9 @@
+<!-- templates/checkout.html -->
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
 <h2 class="text-center mb-4">Оформление заказа</h2>
-<ul id="address-suggestions" class="list-group" style="position: absolute; z-index: 1000;"></ul>
+<ul id="address-suggestions" class="list-group" style="position: absolute; z-index: 1000; display: none;"></ul>
 
 <!-- Прогресс-бар для отслеживания этапа оформления -->
 <div class="progress my-4">
@@ -42,7 +43,7 @@
     <form method="post" class="mt-4">
         {% csrf_token %}
         {% if not user.is_authenticated %}
-            <p>Для оформления заказа необходимо <a href="{% url 'register' %}?next={{ request.path }}">зарегистрироваться или войти</a>.</p>
+            <p>Для оформления заказа необходимо <a href="{% url 'login' %}?next={{ request.path }}">войти</a> или <a href="{% url 'register' %}?next={{ request.path }}">зарегистрироваться</a>.</p>
         {% endif %}
         <div class="form-group mb-3">
             <label for="address">Адрес доставки</label>
@@ -70,39 +71,54 @@
         const suggestionsBox = document.getElementById("address-suggestions");
 
         addressInput.addEventListener("input", function() {
+            const query = addressInput.value.trim();
+
+            // Показать подсказки только если введено более 3 символов
+            if (query.length < 3) {
+                suggestionsBox.style.display = 'none';
+                return;
+            }
+
             fetch("/dadata/suggest-address/", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "X-CSRFToken": "{{ csrf_token }}",
                 },
-                body: JSON.stringify({ query: addressInput.value })
+                body: JSON.stringify({ query })
             })
             .then(response => response.json())
             .then(data => {
                 suggestionsBox.innerHTML = ''; // Очищаем предыдущие подсказки
-                if (data.suggestions) {
+                if (data.suggestions && data.suggestions.length > 0) {
+                    suggestionsBox.style.display = 'block';
                     data.suggestions.forEach(item => {
                         const suggestion = document.createElement("li");
                         suggestion.classList.add("list-group-item");
                         suggestion.textContent = item.value;
                         suggestion.addEventListener("click", () => {
                             addressInput.value = item.value; // Установка выбранного значения
-                            suggestionsBox.innerHTML = ''; // Скрытие подсказок
+                            suggestionsBox.style.display = 'none'; // Скрытие подсказок
                         });
                         suggestionsBox.appendChild(suggestion);
                     });
+                } else {
+                    suggestionsBox.style.display = 'none';
                 }
             })
-            .catch(error => console.error('Ошибка:', error));
+            .catch(error => {
+                console.error('Ошибка:', error);
+                suggestionsBox.style.display = 'none';
+            });
         });
 
         // Закрываем подсказки, если пользователь кликает вне поля ввода
         document.addEventListener("click", function(event) {
             if (!addressInput.contains(event.target)) {
-                suggestionsBox.innerHTML = '';
+                suggestionsBox.style.display = 'none';
             }
         });
     });
 </script>
 {% endblock %}
+

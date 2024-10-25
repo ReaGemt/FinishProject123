@@ -1,23 +1,36 @@
 <!-- templates\order_detail.html-->
 {% extends 'base.html' %}
 {% block content %}
-<h2 class="text-center mb-4">Детали заказа №{{ order.id }}</h2>
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Детали заказа №{{ order.id }}</h2>
 
-<p><strong>Дата заказа:</strong> {{ order.created_at|date:"d.m.Y H:i" }}</p>
-<p><strong>Статус заказа:</strong> {{ order.get_status_display }}</p>
+    <div class="mb-3">
+        <p><strong>Дата заказа:</strong> {{ order.created_at|date:"d.m.Y H:i" }}</p>
+        <p><strong>Статус заказа:</strong> {{ order.get_status_display }}</p>
+        {% if order.address %}
+            <p><strong>Адрес доставки:</strong> {{ order.address }}</p>
+        {% endif %}
+        {% if order.comments %}
+            <p><strong>Комментарии к заказу:</strong> {{ order.comments }}</p>
+        {% endif %}
+    </div>
 
-<h4>Товары:</h4>
-{% if order.items.all %}
-    <ul class="list-group mb-3">
-        {% for item in order.items.all %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                {{ item.product.name }} - {{ item.quantity }} шт.
-                <span>{{ item.get_total_price }} руб.</span>
-            </li>
-        {% endfor %}
-    </ul>
-    <p class="text-end"><strong>Общая сумма:</strong> {{ total_price }} руб.</p>
-{% else %}
-    <p>В заказе нет товаров.</p>
-{% endif %}
+    <h4>Товары:</h4>
+    {% if order.items.all %}
+        <ul class="list-group mb-3">
+            {% for item in order.items.all %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ item.product.name }}</strong><br>
+                        {{ item.quantity }} шт.
+                    </div>
+                    <span>{{ item.get_total_price }} руб.</span>
+                </li>
+            {% endfor %}
+        </ul>
+        <p class="text-end fs-5"><strong>Общая сумма:</strong> {{ total_price }} руб.</p>
+    {% else %}
+        <p class="text-center">В заказе нет товаров.</p>
+    {% endif %}
+</div>
 {% endblock %}

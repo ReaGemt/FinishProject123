@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'core.apps.CoreConfig',
     'widget_tweaks',
     'dadata',
+
 ]
 
 MIDDLEWARE = [
@@ -98,7 +99,6 @@ environ.Env.read_env('.env')
 TELEGRAM_BOT_TOKEN = env("TELEGRAM_BOT_TOKEN", default="your_bot_token_here")
 ADMIN_TELEGRAM_CHAT_ID = env("ADMIN_TELEGRAM_CHAT_ID", default="your_admin_chat_id_here")
 ENABLE_TELEGRAM_NOTIFICATIONS = env.bool("ENABLE_TELEGRAM_NOTIFICATIONS", default=True)
-print("TELEGRAM_BOT_TOKEN:", env("TELEGRAM_BOT_TOKEN"))
 
 # SMTP настройки
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -115,7 +115,7 @@ EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL')
 ADMIN_EMAIL = env('ADMIN_EMAIL')
 ENABLE_EMAIL_NOTIFICATIONS = env.bool("ENABLE_EMAIL_NOTIFICATIONS", default=True)
-print("EMAIL_HOST_USER:", env("EMAIL_HOST_USER"))
+
 
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True

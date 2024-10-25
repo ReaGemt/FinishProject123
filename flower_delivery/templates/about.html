@@ -8,7 +8,7 @@
 
     <!-- Пример для добавления изображения -->
     <div class="text-center mb-4">
-        <img src="{% static 'images/logo.png' %}" alt="О нас" class="img-fluid" style="max-width: 400px;">
+        <img src="{% static 'images/logo.png' %}" alt="FlowerDelivery Logo" class="img-fluid rounded shadow" style="max-width: 400px;">
     </div>
 
     <p class="lead text-center">
@@ -37,16 +37,17 @@
     <div class="text-center mt-4">
         <h4>Следите за нами в социальных сетях</h4>
         <div class="d-flex justify-content-center">
-            <a href="https://facebook.com" target="_blank" class="me-3">
-                <img src="{% static 'images/facebook.png' %}" alt="Facebook" style="width: 40px;">
+            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" class="me-3" aria-label="Facebook">
+                <img src="{% static 'images/facebook.png' %}" alt="Facebook" class="img-thumbnail" style="width: 40px;">
             </a>
-            <a href="https://vk.com" target="_blank" class="me-3">
-                <img src="{% static 'images/vk.png' %}" alt="VK" style="width: 38px;">
+            <a href="https://vk.com" target="_blank" rel="noopener noreferrer" class="me-3" aria-label="VK">
+                <img src="{% static 'images/vk.png' %}" alt="VK" class="img-thumbnail" style="width: 38px;">
             </a>
-            <a href="https://twitter.com" target="_blank">
-                <img src="{% static 'images/twitter.png' %}" alt="Twitter" style="width: 40px;">
+            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+                <img src="{% static 'images/twitter.png' %}" alt="Twitter" class="img-thumbnail" style="width: 40px;">
             </a>
         </div>
     </div>
+</div>
 {% endblock %}
 

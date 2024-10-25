@@ -1,6 +1,7 @@
 <!-- templates\add_product.html -->
 {% extends 'base.html' %}
 {% block title %}Добавить продукт{% endblock %}
+{% load widget_tweaks %}
 
 {% block content %}
 <div class="container mt-4">
@@ -9,16 +10,10 @@
     <form method="post" enctype="multipart/form-data" class="bg-light p-4 rounded shadow-sm">
         {% csrf_token %}
 
-        <!-- Отображение ошибок формы, если они есть -->
-        {% if form.errors %}
+        <!-- Отображение общих ошибок формы, если они есть -->
+        {% if form.non_field_errors %}
             <div class="alert alert-danger">
-                <ul>
-                    {% for field in form %}
-                        {% for error in field.errors %}
-                            <li>{{ error }}</li>
-                        {% endfor %}
-                    {% endfor %}
-                </ul>
+                {{ form.non_field_errors }}
             </div>
         {% endif %}
 
@@ -26,7 +21,7 @@
         {% for field in form %}
             <div class="mb-3">
                 <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                {{ field }}
+                {{ field|add_class:"form-control" }}
                 {% if field.help_text %}
                     <small class="form-text text-muted">{{ field.help_text }}</small>
                 {% endif %}
@@ -38,9 +33,8 @@
 
         <div class="d-flex justify-content-between mt-3">
             <button type="submit" class="btn btn-primary">Добавить</button>
-            <a href="{% url 'catalog' %}" class="btn btn-secondary">Отмена</a>
+            <a href="{% url 'catalog' %}" class="btn btn-outline-secondary">Отмена</a>
         </div>
     </form>
 </div>
 {% endblock %}
-

@@ -3,12 +3,12 @@
 {% block title %}{{ product.name }}{% endblock %}
 {% load static %}
 {% block content %}
-<div class="row">
+<div class="row mt-5">
     <div class="col-md-6">
         {% if product.image %}
-            <img src="{{ product.image.url }}" class="img-fluid" alt="{{ product.name }}">
+            <img src="{{ product.image.url }}" class="img-fluid rounded" alt="{{ product.name }}">
         {% else %}
-            <img src="{% static 'images/placeholder.png' %}" class="img-fluid" alt="Нет изображения">
+            <img src="{% static 'images/placeholder.png' %}" class="img-fluid rounded" alt="Нет изображения">
         {% endif %}
     </div>
     <div class="col-md-6">
@@ -18,8 +18,10 @@
         <p id="total-price"><strong>Итого: {{ product.price }} ₽</strong></p>
         <form method="POST" action="{% url 'add_to_cart' product.id %}" id="add-to-cart-form">
             {% csrf_token %}
-            <label for="quantity">Количество:</label>
-            <input type="number" name="quantity" id="quantity" value="1" min="1" class="form-control mb-3" style="width: 100px;" onchange="updateTotal({{ product.price }})">
+            <div class="mb-3">
+                <label for="quantity" class="form-label">Количество:</label>
+                <input type="number" name="quantity" id="quantity" value="1" min="1" class="form-control" style="width: 100px;" onchange="updateTotal({{ product.price }})">
+            </div>
             <button type="button" class="btn btn-success" id="add-to-cart-btn">Добавить в корзину</button>
         </form>
         <div id="cart-message" class="alert alert-info mt-3" style="display: none;">
@@ -30,20 +32,21 @@
     </div>
 </div>
 
-<hr>
+<hr class="my-4">
 
 <h3>Отзывы</h3>
-{% if product.review_set.count %}
-    <ul class="list-group">
+{% if product.review_set.exists %}
+    <ul class="list-group mb-4">
         {% for review in product.review_set.all %}
         <li class="list-group-item">
-            <p>{{ review.comment }}</p> <!-- Используем 'comment' вместо 'review_text' -->
-            <small>Рейтинг: {{ review.rating }}/5 - {{ review.created_at|date:"d.m.Y" }}</small>
+            <p><strong>{{ review.user.username }}</strong> - Рейтинг: {{ review.rating }}/5</p>
+            <p>{{ review.comment }}</p>
+            <small class="text-muted">{{ review.created_at|date:"d.m.Y H:i" }}</small>
         </li>
         {% endfor %}
     </ul>
 {% else %}
-    <p>Отзывов пока нет.</p>
+    <p>Отзывов пока нет. Будьте первым, кто оставит отзыв!</p>
 {% endif %}
 
 <a href="{% url 'add_review' product.id %}" class="btn btn-primary mt-4">Добавить отзыв</a>
@@ -87,15 +90,43 @@
         .then(response => response.json())
         .then(data => {
             if (data.message) {
+                const cartMessage = document.getElementById('cart-message');
                 document.getElementById('cart-message-text').textContent = data.message;
-                document.getElementById('cart-message').style.display = 'block';
+                cartMessage.style.display = 'block';
+                cartMessage.classList.add('fade-in');
+                setTimeout(() => cartMessage.classList.remove('fade-in'), 500);
             }
         })
         .catch(error => console.error('Ошибка:', error));
     });
 
     function hideCartMessage() {
-        document.getElementById('cart-message').style.display = 'none';
+        const cartMessage = document.getElementById('cart-message');
+        cartMessage.classList.add('fade-out');
+        setTimeout(() => {
+            cartMessage.style.display = 'none';
+            cartMessage.classList.remove('fade-out');
+        }, 300);
     }
 </script>
+
+<style>
+    .fade-in {
+        animation: fadeIn 0.5s forwards;
+    }
+    .fade-out {
+        animation: fadeOut 0.3s forwards;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes fadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+    }
+</style>
 {% endblock %}
+

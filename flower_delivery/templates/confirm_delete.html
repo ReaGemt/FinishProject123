@@ -1,5 +1,4 @@
 <!-- templates/confirm_delete.html -->
-
 {% extends 'base.html' %}
 {% block content %}
 <h2 class="text-center">Удалить товар: {{ product.name }}?</h2>
@@ -22,7 +21,7 @@
                 Вы уверены, что хотите удалить товар {{ product.name }}?
             </div>
             <div class="modal-footer">
-                <form method="POST">
+                <form method="POST" action="{% url 'remove_product' product.id %}">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-danger">Удалить</button>
                 </form>
@@ -32,16 +31,5 @@
     </div>
 </div>
 
-<!-- Убедитесь, что скрипты Bootstrap подключены в шаблоне base.html -->
-<script>
-    // Проверка удаления перед отправкой формы (дополнительно, если нужно)
-    document.querySelectorAll('form').forEach(form => {
-        form.addEventListener('submit', (event) => {
-            const confirmDelete = confirm('Вы уверены, что хотите удалить товар?');
-            if (!confirmDelete) {
-                event.preventDefault();
-            }
-        });
-    });
-</script>
 {% endblock %}
+

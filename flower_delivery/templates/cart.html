@@ -1,4 +1,6 @@
+<!-- templates\cart.html -->
 {% extends 'base.html' %}
+{% load static %}
 {% block content %}
 <h2 class="text-center mb-4">Ваша корзина</h2>
 
@@ -43,32 +45,48 @@
 {% endif %}
 
 <script>
+    const debounce = (func, delay) => {
+        let timeoutId;
+        return (...args) => {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+            timeoutId = setTimeout(() => {
+                func(...args);
+            }, delay);
+        };
+    };
+
+    const updateCartItem = debounce(function(itemId, newQuantity) {
+        fetch(`/cart/update/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ quantity: newQuantity })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Обновляем общую сумму по товару
+                document.querySelector(`tr[data-item-id="${itemId}"] .item-total`).textContent = `${data.item_total} руб.`;
+                // Обновляем итоговую сумму корзины
+                document.getElementById('cart-total').textContent = `${data.cart_total} руб.`;
+            } else {
+                alert('Ошибка обновления корзины');
+            }
+        })
+        .catch(error => console.error('Ошибка:', error));
+    }, 500); // Задержка в 500 мс перед отправкой запроса
+
     document.querySelectorAll('.quantity-input').forEach(function(input) {
         input.addEventListener('change', function() {
             const newQuantity = this.value;
             const itemId = this.closest('tr').getAttribute('data-item-id');
-
-            fetch(`/cart/update/${itemId}/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ quantity: newQuantity })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Обновляем общую сумму по товару
-                    this.closest('tr').querySelector('.item-total').textContent = `${data.item_total} руб.`;
-                    // Обновляем итоговую сумму корзины
-                    document.getElementById('cart-total').textContent = `${data.cart_total} руб.`;
-                } else {
-                    alert('Ошибка обновления корзины');
-                }
-            })
-            .catch(error => console.error('Ошибка:', error));
+            updateCartItem(itemId, newQuantity);
         });
     });
 </script>
 {% endblock %}
+

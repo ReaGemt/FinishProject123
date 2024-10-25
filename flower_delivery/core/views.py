@@ -1,4 +1,3 @@
-# core/views.py
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.paginator import Paginator
 from .models import Product, Cart, CartItem, Order, OrderItem, Review
@@ -6,17 +5,19 @@ from .forms import UserRegisterForm, UserUpdateForm, ProductForm
 from django.contrib.auth import login
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.models import User
-from django.contrib import messages
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 import json
 import requests
-from dadata import Dadata
-import os
-from telegram import Bot
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
+from telegram import Bot
+import logging
 
+logger = logging.getLogger(__name__)
 
 # Utility functions
 def is_manager(user):
@@ -30,16 +31,14 @@ def is_admin(user):
 def product_list(request):
     category = request.GET.get('category')
     products = Product.objects.filter(category=category) if category else Product.objects.all()
-    # Добавьте сортировку по умолчанию (например, по имени или дате создания)
-    products = products.order_by('name')  # или 'created_at', если это более подходящий вариант
+    products = products.order_by('name')  # Сортировка по имени
     paginator = Paginator(products, 6)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     return render(request, 'catalog.html', {'page_obj': page_obj, 'products': page_obj.object_list, 'is_paginated': True})
 
-
 def get_or_create_cart(request):
-    """Функция для получения или создания корзины с привязкой к пользователю или сессии"""
+    """Функция для получения или создания корзины, привязанной к пользователю или сессии"""
     if request.user.is_authenticated:
         cart, created = Cart.objects.get_or_create(user=request.user)
     else:
@@ -54,52 +53,50 @@ def get_or_create_cart(request):
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     cart = get_or_create_cart(request)
-    quantity = int(request.POST.get('quantity', 1))
+    try:
+        quantity = int(request.POST.get('quantity', 1))
+        if quantity <= 0:
+            raise ValueError("Количество должно быть положительным числом.")
+    except ValueError:
+        messages.error(request, "Некорректное количество товара.")
+        return redirect('view_cart')
 
-    # Получение или создание элемента корзины
     cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
     if not created:
-        cart_item.quantity += quantity  # Увеличиваем количество, если товар уже есть в корзине
+        cart_item.quantity += quantity
     else:
-        cart_item.quantity = quantity  # Устанавливаем количество для нового товара
+        cart_item.quantity = quantity
     cart_item.save()
 
     message = f'Товар "{product.name}" добавлен в корзину. Количество: {cart_item.quantity}.'
-
-    # Проверка на AJAX-запрос
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({'message': message})
 
-    # Обычный редирект, если запрос не был через AJAX
     return redirect('view_cart')
 
 def view_cart(request):
     cart = get_or_create_cart(request)
-    cart_items = cart.items.all()  # Доступ к элементам корзины
+    cart_items = cart.items.all()
     return render(request, 'cart.html', {'cart': cart, 'cart_items': cart_items})
-
 
 @login_required
 def update_cart_item(request, item_id):
     if request.method == 'POST':
         cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
-        data = json.loads(request.body)
-        new_quantity = data.get('quantity', 1)
-
-        # Проверяем, что количество валидное
-        if new_quantity.isdigit() and int(new_quantity) > 0:
-            cart_item.quantity = int(new_quantity)
+        try:
+            data = json.loads(request.body)
+            new_quantity = int(data.get('quantity', 1))
+            if new_quantity <= 0:
+                raise ValueError("Количество должно быть положительным.")
+            cart_item.quantity = new_quantity
             cart_item.save()
 
-            cart_total = cart_item.cart.get_total()  # Обновляем итоговую сумму
+            cart_total = cart_item.cart.get_total()
             item_total = cart_item.get_total_price()
 
-            return JsonResponse({
-                'success': True,
-                'cart_total': cart_total,
-                'item_total': item_total
-            })
-        else:
+            return JsonResponse({'success': True, 'cart_total': cart_total, 'item_total': item_total})
+        except (ValueError, json.JSONDecodeError) as e:
+            logger.error(f"Ошибка обновления корзины: {e}")
             return JsonResponse({'success': False, 'error': 'Invalid quantity'})
     return JsonResponse({'success': False, 'error': 'Invalid request'})
 
@@ -110,10 +107,9 @@ def remove_cart_item(request, item_id):
     messages.success(request, 'Товар удалён из корзины.')
     return redirect('view_cart')
 
-
 @login_required
 def checkout(request):
-    cart, created = Cart.objects.get_or_create(user=request.user)
+    cart = get_or_create_cart(request)
 
     if not cart.items.exists():
         messages.error(request, 'Ваша корзина пуста. Пожалуйста, добавьте товары перед оформлением заказа.')
@@ -123,34 +119,46 @@ def checkout(request):
         address = request.POST.get('address')
         comments = request.POST.get('comments', '')
 
-        # Создание заказа
-        order = Order.objects.create(user=request.user, address=address, comments=comments)
-        for item in cart.items.all():
-            OrderItem.objects.create(order=order, product=item.product, quantity=item.quantity)
+        try:
+            # Создание заказа
+            order = Order.objects.create(user=request.user, address=address, comments=comments)
+            for item in cart.items.all():
+                OrderItem.objects.create(order=order, product=item.product, quantity=item.quantity)
 
-        # Формирование сообщения для уведомления
-        product_list = "\n".join([f"{item.product.name} x{item.quantity}" for item in cart.items.all()])
-        message = (
-            f"Новый заказ от {request.user.username}.\n"
-            f"Адрес: {address}\n"
-            f"Комментарии: {comments}\n"
-            f"Товары:\n{product_list}"
-        )
+            # Формирование сообщения для уведомлений
+            product_list = "\n".join([f"{item.product.name} x{item.quantity}" for item in cart.items.all()])
+            message = (
+                f"Новый заказ от {request.user.username}.\n"
+                f"Адрес: {address}\n"
+                f"Комментарии: {comments}\n"
+                f"Товары:\n{product_list}"
+            )
 
-        # Уведомление через телеграм-бота
-        if settings.ENABLE_TELEGRAM_NOTIFICATIONS and settings.TELEGRAM_BOT_TOKEN and settings.ADMIN_CHAT_ID:
-            bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
-            bot.send_message(chat_id=settings.ADMIN_CHAT_ID, text=message)
+            # Уведомление через Telegram
+            if settings.ENABLE_TELEGRAM_NOTIFICATIONS and settings.TELEGRAM_BOT_TOKEN and settings.ADMIN_TELEGRAM_CHAT_ID:
+                bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
+                try:
+                    bot.send_message(chat_id=settings.ADMIN_TELEGRAM_CHAT_ID, text=message)
+                except Exception as e:
+                    logger.error(f"Ошибка отправки сообщения в Telegram: {e}")
 
-        # Уведомление по email
-        if settings.ENABLE_EMAIL_NOTIFICATIONS:
-            subject = "Новый заказ на сайте"
-            send_mail(subject, message, settings.EMAIL_HOST_USER, [settings.ADMIN_EMAIL])
+            # Уведомление по email
+            if settings.ENABLE_EMAIL_NOTIFICATIONS:
+                try:
+                    subject = "Новый заказ на сайте"
+                    send_mail(subject, message, settings.EMAIL_HOST_USER, [settings.ADMIN_EMAIL])
+                except Exception as e:
+                    logger.error(f"Ошибка отправки email: {e}")
 
-        # Очистка корзины после оформления заказа
-        cart.items.all().delete()
-        messages.success(request, 'Ваш заказ успешно оформлен.')
-        return redirect('order_success')
+            # Очистка корзины после оформления заказа
+            cart.items.all().delete()
+            messages.success(request, 'Ваш заказ успешно оформлен.')
+            return redirect('order_success')
+
+        except Exception as e:
+            # Логирование ошибки и сообщение для пользователя
+            logger.error(f"Ошибка при оформлении заказа: {e}")
+            messages.error(request, 'Ошибка при оформлении заказа. Попробуйте позже.')
 
     return render(request, 'checkout.html', {'cart': cart})
 
@@ -164,18 +172,17 @@ def add_review(request, product_id):
     product = get_object_or_404(Product, id=product_id)
 
     if request.method == 'POST':
-        rating = request.POST.get('rating')
-        comment = request.POST.get('comment')
+        try:
+            rating = int(request.POST.get('rating'))
+            comment = request.POST.get('comment')
 
-        if rating and comment and 1 <= int(rating) <= 5:
-            Review.objects.create(
-                product=product,
-                user=request.user,
-                rating=int(rating),
-                comment=comment
-            )
-            return redirect('product_detail', product_id=product.id)
-        else:
+            if rating and comment and 1 <= rating <= 5:
+                Review.objects.create(product=product, user=request.user, rating=rating, comment=comment)
+                return redirect('product_detail', product_id=product.id)
+            else:
+                raise ValueError("Некорректный рейтинг.")
+        except ValueError as e:
+            logger.error(f"Ошибка добавления отзыва: {e}")
             return render(request, 'add_review.html', {
                 'product': product,
                 'errors': ["Некорректные данные. Пожалуйста, укажите правильный рейтинг (от 1 до 5) и комментарий."]
@@ -201,7 +208,9 @@ def register(request):
 
 @login_required
 def profile(request):
-    return render(request, 'profile.html')
+    # Получаем заказы текущего пользователя
+    orders = Order.objects.filter(user=request.user).order_by('-created_at')
+    return render(request, 'profile.html', {'orders': orders})
 
 def about(request):
     return render(request, 'about.html')
@@ -352,13 +361,18 @@ def suggest_address(request):
         if query:
             api_url = "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address"
             headers = {
-                "Authorization": f"Token {os.getenv('DADATA_API_TOKEN')}",
+                "Authorization": f"Token {settings.DADATA_API_TOKEN}",
                 "Content-Type": "application/json",
             }
             data = {"query": query, "count": 5}
-            response = requests.post(api_url, json=data, headers=headers)
-            suggestions = response.json().get('suggestions', [])
-            return JsonResponse({'suggestions': suggestions})
+            try:
+                response = requests.post(api_url, json=data, headers=headers)
+                suggestions = response.json().get('suggestions', [])
+                return JsonResponse({'suggestions': suggestions})
+            except Exception as e:
+                logger.error(f"Ошибка при подключении к DaData: {e}")
+                return JsonResponse({'suggestions': [], 'error': 'Service unavailable'})
+
     return JsonResponse({'suggestions': []})
 
 @login_required

@@ -12,39 +12,37 @@
     <div class="row">
         {% if products %}
             {% for product in products %}
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 position-relative">
-                    {% if product.is_popular %}
-                        <div class="sticker bg-warning">Популярно</div>
-                    {% endif %}
-                    {% if product.image %}
-                        <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 240px; object-fit: cover;">
-                    {% else %}
-                        <img src="{% static 'images/placeholder.png' %}" class="card-img-top" alt="Нет изображения" style="height: 240px; object-fit: cover;">
-                    {% endif %}
-                    <div class="card-body text-center">
-                        <h5 class="card-title">{{ product.name }}</h5>
-                        <p class="card-text">{{ product.description|truncatewords:20 }}</p>
-                        <p><strong>Цена: {{ product.price }} руб.</strong></p>
-
-                        <!-- Отображение рейтинга товара со звёздочками -->
-                        <p>
-                            Рейтинг:
-                            {% for i in "12345" %}
-                                {% if product.rating >= forloop.counter %}
-                                    <i class="fas fa-star text-warning"></i>
-                                {% else %}
-                                    <i class="far fa-star text-muted"></i>
-                                {% endif %}
-                            {% endfor %}
-                        </p>
-                        <a href="{% url 'product_detail' product.id %}" class="btn btn-primary w-100 mb-2">Подробнее</a>
-
-                        <!-- Кнопка добавления в корзину -->
-                        <button class="btn btn-primary add-to-cart-btn" data-product-id="{{ product.id }}">Добавить в корзину</button>
+                 <div class="col-md-4 mb-4">
+                    <div class="card h-100 position-relative d-flex flex-column">
+                        {% if product.is_popular %}
+                            <div class="sticker">Популярно</div> <!-- Проверка на популярность -->
+                        {% endif %}
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 240px; object-fit: cover;">
+                        {% else %}
+                            <img src="{% static 'images/placeholder.png' %}" class="card-img-top" alt="Нет изображения" style="height: 240px; object-fit: cover;">
+                        {% endif %}
+                        <div class="card-body d-flex flex-column text-center">
+                            <h5 class="card-title">{{ product.name }}</h5>
+                            <p class="card-text">{{ product.description|truncatewords:20 }}</p>
+                            <div class="mt-auto mb-3 align-self-stretch">
+                                <p><strong>Цена: {{ product.price }} руб.</strong></p>
+                                <p>
+                                    Рейтинг:
+                                    {% for i in "12345" %}
+                                        {% if product.rating >= forloop.counter %}
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% else %}
+                                            <i class="far fa-star text-muted"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </p>
+                            </div>
+                            <a href="{% url 'product_detail' product.id %}" class="btn btn-primary w-100 mb-2">Подробнее</a>
+                            <button class="btn btn-primary add-to-cart-btn w-100" data-product-id="{{ product.id }}">Добавить в корзину</button>
+                        </div>
                     </div>
                 </div>
-            </div>
             {% endfor %}
         {% else %}
             <p class="text-center">В этой категории нет товаров.</p>
@@ -55,16 +53,58 @@
     {% include 'pagination.html' %}
 </div>
 
+<!-- Модальное окно -->
+<div id="cart-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <p>Товар добавлен в корзину. Что хотите сделать?</p>
+        <div class="d-flex justify-content-between">
+            <button id="continue-shopping" class="btn btn-secondary">Продолжить покупки</button>
+            <a href="{% url 'view_cart' %}" class="btn btn-primary">Перейти в корзину</a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .modal {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+    }
+
+    .modal-content {
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        max-width: 300px;
+    }
+
+    .modal-content .btn {
+        width: 45%;
+    }
+</style>
+
 <script>
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
     document.querySelectorAll('.add-to-cart-btn').forEach(button => {
         button.addEventListener('click', function() {
             const productId = this.getAttribute('data-product-id');
-            const quantity = 1; // Установить желаемое количество для быстрого добавления
+            const quantity = 1;
+
+            button.disabled = true;
 
             fetch(`/add_to_cart/${productId}/`, {
                 method: 'POST',
                 headers: {
-                    'X-CSRFToken': '{{ csrf_token }}',
+                    'X-CSRFToken': csrfToken,
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'x-requested-with': 'XMLHttpRequest',
                 },
@@ -73,16 +113,37 @@
             .then(response => response.json())
             .then(data => {
                 if (data.message) {
-                    showCartPopup(); // Показать всплывающее окно
+                    showCartModal();
+                } else {
+                    alert('Ошибка добавления в корзину. Попробуйте позже.');
                 }
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                alert('Ошибка сети. Попробуйте снова.');
+            })
+            .finally(() => {
+                button.disabled = false;
             });
         });
     });
 
-    function showCartPopup() {
-        if (confirm("Товар добавлен в корзину. Перейти в корзину?")) {
-            window.location.href = "{% url 'view_cart' %}";
-        }
+    function showCartModal() {
+        const modal = document.getElementById('cart-modal');
+        modal.style.display = 'flex';
+
+        document.getElementById('continue-shopping').addEventListener('click', function() {
+            modal.style.display = 'none';
+        });
     }
+
+    // Закрытие модального окна при клике вне его
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('cart-modal');
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
 </script>
 {% endblock %}
+

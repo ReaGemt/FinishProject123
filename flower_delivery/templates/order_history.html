@@ -2,36 +2,39 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
-<div class="container">
+<div class="container mt-4">
     <h2 class="text-center mb-4">История заказов</h2>
 
     {% if orders %}
         <div class="table-responsive">
-            <table class="table table-bordered table-hover">
+            <table class="table table-bordered table-hover align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th scope="col">№ заказа</th>
-                        <th scope="col">Дата заказа</th>
+                        <th scope="col" class="text-center">№ заказа</th>
+                        <th scope="col" class="text-center">Дата заказа</th>
                         <th scope="col">Товары</th>
-                        <th scope="col">Итого</th>
-                        <th scope="col">Статус</th> <!-- Добавлено: Колонка статуса -->
-                        <th scope="col">Действие</th> <!-- Добавлено: Кнопка для просмотра деталей -->
+                        <th scope="col" class="text-center">Итого</th>
+                        <th scope="col" class="text-center">Статус</th>
+                        <th scope="col" class="text-center">Действие</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for order in orders %}
                     <tr>
-                        <td>{{ order.id }}</td>
-                        <td>{{ order.created_at|date:"d.m.Y H:i" }}</td>
+                        <td class="text-center">{{ order.id }}</td>
+                        <td class="text-center">{{ order.created_at|date:"d.m.Y H:i" }}</td>
                         <td>
-                            <ul>
-                                {% for item in order.orderitem_set.all %}
+                            <ul class="list-unstyled">
+                                {% for item in order.orderitem_set.all|slice:":3" %}
                                 <li>{{ item.product.name }} - {{ item.quantity }} шт.</li>
                                 {% endfor %}
+                                {% if order.orderitem_set.count > 3 %}
+                                <li>и еще {{ order.orderitem_set.count|add:"-3" }}...</li>
+                                {% endif %}
                             </ul>
                         </td>
-                        <td>{{ order.get_total_price }} руб.</td>
-                        <td>
+                        <td class="text-center">{{ order.get_total_price }} руб.</td>
+                        <td class="text-center">
                             <span class="badge
                                 {% if order.status == 'pending' %} bg-warning
                                 {% elif order.status == 'confirmed' %} bg-primary
@@ -41,7 +44,7 @@
                                 {{ order.get_status_display }}
                             </span>
                         </td>
-                        <td>
+                        <td class="text-center">
                             <a href="{% url 'order_detail' order.id %}" class="btn btn-sm btn-outline-primary">Подробнее</a>
                         </td>
                     </tr>

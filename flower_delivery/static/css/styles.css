@@ -1,56 +1,172 @@
-/* Переменные для светлой темы */
-:root {
-    --primary-color: #ff6f61; /* Мягкий красный цвет для акцентов */
-    --secondary-color: #2c7a7b; /* Контрастный зеленый для кнопок */
-    --light-bg: #f8f9fa;
-    --background-color: #f5f5f5; /* Легкий серый для фона */
-    --text-color: #333;
-    --hover-bg: #e0e0e0;
-    --gradient-start: #fdfbfb;
-    --gradient-end: #ebedee;
-    --light-card-bg: #ffffff;
-    --header-bg: #fafafa;
-    --header-border: #e9ecef;
-    --warning-color: #ffc107;
-    --muted-color: #d6d6d6;
-}
-
 /* Переменные для темной темы */
 body.dark-theme {
-    --primary-color: #303f9f;
-    --secondary-color: #1e3a8a;
-    --light-bg: #1f1f1f;
-    --text-color: #e0e0e0;
-    --gradient-start: #222;
-    --gradient-end: #333;
-    --header-border: #333;
-    --hover-bg: #616161;
-    --warning-color: #ffc107;
-    --muted-color: #888;
+    --primary-color: #1e90ff; /* Мягкий красный для акцентов */
+    --secondary-color: #2c7a7b; /* Контрастный зеленый для кнопок */
+    --light-bg: #1e1e1e; /* Темный фон */
+    --background-color: #2a2a2a; /* Чуть светлее основной фон */
+    --text-color: #2c7a7b; /* Светлый текст */
+    --hover-bg: #333; /* Фон при наведении */
+    --gradient-start: #202020;
+    --gradient-end: #181818;
+    --light-card-bg: #242424; /* Темно-серый для карточек и блоков */
+    --header-bg: #181818; /* Фон хедера */
+    --header-border: #444; /* Границы хедера и блоков */
+    --warning-color: #ffb74d; /* Цвет предупреждений */
+    --muted-color: #9e9e9e; /* Серый для менее важного текста */
 }
 
 /* Основные стили */
-body {
+body.dark-theme {
     background: linear-gradient(to bottom, var(--gradient-start), var(--gradient-end));
     font-family: 'Roboto', Arial, sans-serif;
     color: var(--text-color);
     transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Стиль для хедера */
-header {
-    background-color: var(--light-bg);
-    padding: 10px 0;
+/* Заголовки */
+body.dark-theme h1, body.dark-theme h2, body.dark-theme h3, body.dark-theme h4, body.dark-theme h5, body.dark-theme h6 {
+    color: var(--text-color); /* Цвет заголовков */
+}
+
+/* Стиль для хедера и футера */
+body.dark-theme header, body.dark-theme footer {
+    background-color: var(--header-bg);
+    color: var(--text-color);
     border-bottom: 1px solid var(--header-border);
 }
 
-/* Стили для слайдера */
-.carousel-inner img {
-    width: 100%;
-    height: 400px; /* Ограничение высоты */
-    object-fit: cover; /* Сохранение пропорций */
+/* Стили для карточек */
+body.dark-theme .card {
+    background-color: var(--light-card-bg);
+    color: var(--text-color);
+    border-radius: 10px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }
 
+/* Кнопки */
+body.dark-theme .btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #90ee90; /* Белый текст для кнопок */
+}
+
+body.dark-theme .btn-primary:hover {
+    background-color: var(--secondary-color); /* Изменение цвета при наведении */
+}
+
+/* Социальные иконки */
+body.dark-theme .social-media a {
+    color: var(--text-color);
+    background-color: var(--light-card-bg);
+    border-radius: 50%;
+    padding: 8px;
+    display: inline-block;
+    transition: background-color 0.3s ease;
+}
+
+body.dark-theme .social-media a:hover {
+    background-color: var(--primary-color);
+    color: #fff; /* Белый текст для контраста */
+}
+
+/* Таблицы */
+body.dark-theme .table {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    border-color: var(--header-border);
+}
+
+body.dark-theme .table th,
+body.dark-theme .table td {
+    border-top: 1px solid var(--header-border);
+    color: var(--text-color);
+}
+
+/* Выделение активных элементов */
+body.dark-theme .btn, body.dark-theme a {
+    color: var(--secondary-color);
+}
+
+body.dark-theme a:hover, body.dark-theme .btn:hover {
+    color: var(--primary-color);
+}
+
+/* Границы */
+body.dark-theme .border {
+    border-color: var(--header-border);
+}
+
+/* Всплывающие окна и уведомления */
+body.dark-theme .modal-content {
+    background-color: var(--light-card-bg);
+    color: var(--text-color);
+}
+
+body.dark-theme .alert {
+    background-color: #2a2a2a; /* Темный фон для предупреждений */
+    color: var(--text-color); /* Светлый текст для контраста */
+    border-color: var(--header-border); /* Цвет границы для предупреждений */
+}
+
+/* Стили для кнопок удаления */
+.table .btn {
+    background-color: #e199c2; /* Красный цвет для кнопок удаления */
+    color: #ffffff; /* Белый текст для контраста */
+    border: none; /* Убираем границу */
+}
+
+.table .btn:hover {
+    background-color: #b71c1c; /* Темный красный при наведении */
+}
+/* Стикер для популярного товара */
+.sticker {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 5px 15px; /* Увеличиваем отступы для лучшего восприятия */
+    font-size: 1em; /* Увеличиваем размер шрифта */
+    font-weight: bold;
+    color: #fff; /* Цвет текста */
+    background-color: #ffb74d; /* Цвет фона */
+    border-radius: 5px; /* Закругление углов */
+    z-index: 10; /* Чтобы стикер находился поверх */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); /* Тень для улучшения читаемости */
+}
+
+.card {
+    position: relative; /* Убедитесь, что карточка имеет относительное позиционирование */
+    overflow: hidden; /* Скрывает излишки изображения за границами карточки */
+}
+
+.card img {
+    width: 100%;
+    height: auto; /* Сохраняет пропорции */
+    max-height: 250px; /* Установите нужную максимальную высоту */
+    object-fit: cover; /* Обрезает изображение для заполнения карточки */
+    border-top-left-radius: 10px; /* Закругление углов */
+    border-top-right-radius: 10px; /* Закругление углов */
+}
+
+.carousel-inner img {
+    width: 100%; /* Полная ширина изображения */
+    height: auto; /* Автоматическая высота для сохранения пропорций */
+    max-height: 400px; /* Установите максимальную высоту изображения */
+    object-fit: cover; /* Обеспечивает обрезку изображения по размеру */
+}
+
+.carousel-item {
+    overflow: hidden; /* Скрывает часть изображений, выходящую за пределы */
+}
+
+.carousel-caption {
+    background: rgba(0, 0, 0, 0.7); /* Полупрозрачный темный фон */
+    color: #fff; /* Яркий белый текст */
+    padding: 10px; /* Отступы вокруг текста */
+    border-radius: 5px; /* Скругленные углы */
+}
+
+
+/* Стили для заголовков в слайдере */
 .carousel-caption {
     background: rgba(0, 0, 0, 0.7); /* Полупрозрачный темный фон */
     color: #fff; /* Яркий белый текст */
@@ -59,86 +175,13 @@ header {
     text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.8);
     font-size: 1.5em; /* Увеличенный размер текста */
 }
-
-/* Стили для карточек товаров */
-.card {
-    background-color: var(--light-card-bg);
-    border-radius: 10px;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 100%;
-    transition: box-shadow 0.3s ease, transform 0.3s ease;
-    margin-bottom: 30px; /* Увеличенный отступ снизу */
+.carousel-caption h5 {
+    font-size: 2.5em; /* Размер заголовка */
+    font-weight: bold; /* Жирный шрифт */
+    color: #fff; /* Цвет заголовка */
 }
 
-.card img {
-    width: 100%; /* Ширина на 100% */
-    height: 200px; /* Уменьшенная высота */
-    object-fit: cover; /* Сохранение пропорций */
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-}
-
-/* Уменьшение отступов и улучшение компоновки */
-.card-body {
-    padding: 10px;
-}
-
-.catalog .col-md-4 {
-    margin-bottom: 20px;
-}
-
-/* Темная тема */
-body.dark-theme header,
-body.dark-theme footer {
-    background-color: #1f1f1f;
-    color: #e0e0e0;
-    border-color: #333;
-}
-
-body.dark-theme .nav-link {
-    color: #b0bec5;
-}
-
-/* Стикер для популярного товара */
-.sticker {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    padding: 5px 10px;
-    font-size: 0.9em;
-    font-weight: bold;
-    color: #fff;
-    border-radius: 5px;
-    z-index: 10;
-}
-
-.bg-warning {
-    background-color: #ffc107 !important;
-}
-
-/* Социальные иконки */
-.social-media a {
-    margin: 0 10px;
-    text-decoration: none;
-    display: inline-block;
-}
-/* Улучшение читаемости текста на слайдере для обеих тем */
-.carousel-caption {
-    background: rgba(0, 0, 0, 0.7); /* Темный полупрозрачный фон для контраста */
-    color: #fff; /* Яркий белый текст для лучшей читаемости */
-    padding: 15px;
-    border-radius: 8px;
-    text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.8);
-}
-
-/* Стили для темной темы */
-body.dark-theme .carousel-caption {
-    background: rgba(255, 255, 255, 0.7); /* Светлый полупрозрачный фон для контраста */
-    color: #000; /* Черный текст для лучшей читаемости */
-    padding: 15px;
-    border-radius: 8px;
-    text-shadow: none; /* Убираем тень в темной теме */
+.carousel-caption p {
+    font-size: 1em; /* Размер текста под заголовком */
+    color: #fff; /* Цвет текста */
 }

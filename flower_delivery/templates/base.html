@@ -29,7 +29,7 @@
                         <a class="nav-link" href="{% url 'about' %}"><i class="fas fa-info-circle"></i> О нас</a>
                         {% if user.is_authenticated %}
                             <a class="nav-link" href="{% url 'profile' %}"><i class="fas fa-user"></i> Личный кабинет</a>
-                            <a class="nav-link" href="#" onclick="document.getElementById('logout-form').submit();"><i class="fas fa-sign-out-alt"></i> Выйти</a>
+                            <a class="nav-link" href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> Выйти</a>
                             <form id="logout-form" method="post" action="{% url 'logout' %}" style="display: none;">
                                 {% csrf_token %}
                             </form>
@@ -101,7 +101,6 @@
         const themeToggleButton = document.getElementById("theme-toggle");
         const currentTheme = localStorage.getItem("theme");
 
-        // Установка начальной иконки в зависимости от сохраненной темы
         if (currentTheme === "dark") {
             document.body.classList.add("dark-theme");
             themeToggleButton.innerHTML = '<i class="fas fa-moon"></i>';
@@ -109,16 +108,17 @@
             themeToggleButton.innerHTML = '<i class="fas fa-sun"></i>';
         }
 
-        // Обработчик для кнопки переключения темы
         themeToggleButton.addEventListener("click", function() {
             document.body.classList.toggle("dark-theme");
             const isDark = document.body.classList.contains("dark-theme");
-
-            // Сохраняем состояние темы в localStorage
             localStorage.setItem("theme", isDark ? "dark" : "light");
-
-            // Меняем иконку
             themeToggleButton.innerHTML = isDark ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+        });
+
+        // Обработчик для кнопки выхода
+        document.getElementById("logout-link").addEventListener("click", function(event) {
+            event.preventDefault();
+            document.getElementById("logout-form").submit();
         });
     </script>
 
@@ -133,14 +133,12 @@
             const cookieBanner = document.getElementById("cookie-consent");
             const acceptButton = document.getElementById("accept-cookies");
 
-            // Проверка, если cookie с согласием уже установлено
             if (!document.cookie.split(';').some((item) => item.trim().startsWith('cookiesAccepted='))) {
                 cookieBanner.style.display = "block";
             }
 
-            // Установка cookie при нажатии на кнопку
             acceptButton.addEventListener("click", function() {
-                document.cookie = "cookiesAccepted=true; path=/; max-age=" + (60 * 60 * 24 * 365); // cookie на 1 год
+                document.cookie = "cookiesAccepted=true; path=/; max-age=" + (60 * 60 * 24 * 365);
                 cookieBanner.style.display = "none";
             });
         });

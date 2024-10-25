@@ -5,6 +5,9 @@ from django.contrib.auth.forms import UserCreationForm
 from .models import Product
 from dadata import Dadata
 from django.conf import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 class UserRegisterForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -45,15 +48,15 @@ class AddressForm(forms.Form):
     address = forms.CharField(max_length=255, label='Адрес',
                               widget=forms.TextInput(attrs={'placeholder': 'Введите адрес'}))
 
-    def clean_address(self):
+    def clean_address(self, e=None):
+        logger.error(f"Ошибка при подключении к DaData: {e}")
         address = self.cleaned_data['address']
         try:
             dadata = Dadata(settings.DADATA_API_KEY, settings.DADATA_SECRET_KEY)
-            # Автодополнение и проверка адреса
             result = dadata.suggest("address", address)
-            if result:
+            dadata.close()  # Закрываем соединение
+            if result and len(result) > 0:
                 return result[0]['value']  # Вернуть подтверждённый адрес
         except Exception as e:
             print(f"Ошибка при подключении к DaData: {e}")
-        # Возвращаем исходный адрес, если проверка не прошла
         raise forms.ValidationError("Не удалось определить адрес. Пожалуйста, проверьте введённые данные.")

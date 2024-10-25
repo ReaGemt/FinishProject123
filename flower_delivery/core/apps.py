@@ -1,3 +1,4 @@
+# core\apps.py
 from django.apps import AppConfig
 
 class CoreConfig(AppConfig):
@@ -5,4 +6,8 @@ class CoreConfig(AppConfig):
     name = 'core'
 
     def ready(self):
-        import core.signals  # Импортируем сигналы здесь
+        try:
+            import core.signals
+        except ImportError as e:
+            # Логирование ошибки или другое действие
+            print(f"Ошибка импорта сигналов: {e}")

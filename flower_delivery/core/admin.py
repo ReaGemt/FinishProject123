@@ -1,5 +1,7 @@
 # core/admin.py
 from django.contrib import admin
+from django.utils.safestring import mark_safe
+
 from .models import Product, Order, Review, OrderItem
 from django.utils.translation import gettext_lazy as _
 
@@ -11,6 +13,10 @@ class ProductAdmin(admin.ModelAdmin):
     verbose_name = _('Продукт')
     verbose_name_plural = _('Продукты')
 
+from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
+from .models import Order
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = ('id', 'get_products', 'get_user', 'status', 'created_at')
@@ -18,15 +24,23 @@ class OrderAdmin(admin.ModelAdmin):
     search_fields = ('user__username',)
     ordering = ('-created_at',)
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.prefetch_related('items__product')
+
     def get_products(self, obj):
-        return ", ".join([item.product.name for item in obj.items.all()])
+        links = [
+            f'<a href="/admin/core/product/{item.product.id}/change/">{item.product.name}</a>'
+            for item in obj.items.all()
+        ]
+        return mark_safe("<br>".join(links))  # Используем <br> для лучшего отображения
+
     get_products.short_description = _('Товары')
+    get_products.allow_tags = True
 
     def get_user(self, obj):
         return obj.user.username if obj.user else "Анонимный пользователь"
     get_user.short_description = _('Пользователь')
-    verbose_name = _('Заказ')
-    verbose_name_plural = _('Заказы')
 
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
