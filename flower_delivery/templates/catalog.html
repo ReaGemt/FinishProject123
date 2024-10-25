@@ -18,7 +18,7 @@
                         <div class="sticker bg-warning">Популярно</div>
                     {% endif %}
                     {% if product.image %}
-                        <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 240px; object-fit: cover;">
+                        <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 300px; object-fit: cover;">
                     {% else %}
                         <img src="{% static 'images/placeholder.png' %}" class="card-img-top" alt="Нет изображения" style="height: 240px; object-fit: cover;">
                     {% endif %}
