@@ -1,3 +1,7 @@
+import pytz
+import logging
+import json
+import requests
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.paginator import Paginator
 from .models import Product, Cart, CartItem, Order, OrderItem, Review
@@ -7,19 +11,24 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
-import json
-import requests
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
 from telegram import Bot
-import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
+# Constants for working hours
+WORKING_HOURS_START = 9  # Начало рабочего времени (9 утра)
+WORKING_HOURS_END = 18  # Конец рабочего времени (6 вечера)
+
 # Utility functions
+def is_within_working_hours():
+    """Проверяет, находится ли текущее время в пределах рабочего времени."""
+    current_hour = datetime.now(pytz.timezone(settings.TIME_ZONE)).hour
+    return WORKING_HOURS_START <= current_hour < WORKING_HOURS_END
+
 def is_manager(user):
     """Проверяет, является ли пользователь менеджером или администратором."""
     return user.groups.filter(name='Менеджеры').exists() or user.is_superuser
@@ -109,8 +118,11 @@ def remove_cart_item(request, item_id):
 
 @login_required
 def checkout(request):
-    cart = get_or_create_cart(request)
+    if not is_within_working_hours():
+        messages.error(request, 'Заказы принимаются только в рабочее время (с 9:00 до 18:00).')
+        return redirect('view_cart')
 
+    cart = get_or_create_cart(request)
     if not cart.items.exists():
         messages.error(request, 'Ваша корзина пуста. Пожалуйста, добавьте товары перед оформлением заказа.')
         return redirect('view_cart')
@@ -161,6 +173,18 @@ def checkout(request):
             messages.error(request, 'Ошибка при оформлении заказа. Попробуйте позже.')
 
     return render(request, 'checkout.html', {'cart': cart})
+
+@login_required
+def repeat_order(request, order_id):
+    """Функция для повторного заказа."""
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    new_order = Order.objects.create(user=order.user, address=order.address, comments=order.comments)
+
+    for item in order.items.all():
+        OrderItem.objects.create(order=new_order, product=item.product, quantity=item.quantity)
+
+    messages.success(request, 'Повторный заказ успешно оформлен.')
+    return redirect('order_history')
 
 @login_required
 def order_history(request):

@@ -130,3 +130,8 @@ DADATA_SECRET_KEY = env('DADATA_SECRET_KEY')
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 1209600  # Две недели
+
+# Настройки рабочее время
+WORKING_HOURS_START = 9  # Начало рабочего дня (9 утра)
+WORKING_HOURS_END = 18   # Конец рабочего дня (6 вечера)
+WORKING_DAYS = [0, 1, 2, 3, 4, 5, 6]  # Понедельник - Суббота (0 - Понедельник, 5 - Суббота)

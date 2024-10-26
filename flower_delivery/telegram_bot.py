@@ -15,6 +15,7 @@ from telegram.ext import Application, CommandHandler, CallbackContext, CallbackQ
 from core.models import Product, Order, OrderItem, User
 from django.conf import settings
 from asgiref.sync import sync_to_async
+from datetime import datetime
 
 # Настройка логирования
 logger = logging.getLogger(__name__)
@@ -246,6 +247,14 @@ async def check_status(update: Update, context: CallbackContext, from_callback=F
 # Обработчик сообщений для создания заказа
 async def handle_order_message(update: Update, context: CallbackContext) -> None:
     try:
+        if not is_within_working_hours():
+            await context.bot.send_message(
+                chat_id=update.message.chat_id,
+                text="К сожалению, заказы принимаются только с 9:00 до 18:00 с Понедельника по Воскресенье."
+            )
+            return
+
+        # Оставшаяся логика обработки заказа
         message_text = update.message.text
         chat_id = update.message.chat_id
 
@@ -278,6 +287,14 @@ async def handle_order_message(update: Update, context: CallbackContext) -> None
         logger.error(f"Ошибка при обработке заказа: {e}")
         await context.bot.send_message(chat_id=update.message.chat_id,
                                        text="Произошла ошибка при создании заказа. Пожалуйста, попробуйте еще раз.")
+
+def is_within_working_hours():
+    now = datetime.now()
+    if now.weekday() not in settings.WORKING_DAYS:
+        return False
+    if now.hour < settings.WORKING_HOURS_START or now.hour >= settings.WORKING_HOURS_END:
+        return False
+    return True
 
 # Настройка бота
 def setup_bot():
