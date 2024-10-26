@@ -10,6 +10,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-aj49+pk6yxa75+a2+nn
 DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+DOMAIN_NAME = 'http://127.0.0.1:8000'  # Используйте IP-адрес и порт вашего локального сервера
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -21,7 +22,6 @@ INSTALLED_APPS = [
     'core.apps.CoreConfig',
     'widget_tweaks',
     'dadata',
-
 ]
 
 MIDDLEWARE = [

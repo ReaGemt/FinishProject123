@@ -2,6 +2,8 @@
 from django.urls import path, include
 from . import views
 from django.contrib.auth import views as auth_views
+from django.conf.urls.static import static
+from django.conf import settings
 
 urlpatterns = [
     # Основные маршруты каталога и товаров
@@ -52,4 +54,4 @@ urlpatterns = [
     path("send_message/", views.send_message, name="send_message"),
     path('change_currency/', views.change_currency, name='change_currency'),
     path('dadata/suggest-address/', views.suggest_address, name='suggest_address'),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
