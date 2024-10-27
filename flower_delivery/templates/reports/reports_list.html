@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Отчеты по продажам</h1>
+<table>
+    <thead>
+        <tr>
+            <th>Дата</th>
+            <th>Общий объем продаж</th>
+            <th>Количество заказов</th>
+            <th>Количество клиентов</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for report in reports %}
+        <tr>
+            <td>{{ report.created_at|date:"d.m.Y" }}</td>
+            <td>{{ report.total_sales }}</td>
+            <td>{{ report.total_orders }}</td>
+            <td>{{ report.total_customers }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

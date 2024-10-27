@@ -1,0 +1,33 @@
+<!-- templates/admin/sales_report.html -->
+
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Отчет по продажам</h1>
+
+<form method="get">
+    <label for="start_date">Дата начала:</label>
+    <input type="date" id="start_date" name="start_date" value="{{ start_date }}">
+    <label for="end_date">Дата окончания:</label>
+    <input type="date" id="end_date" name="end_date" value="{{ end_date }}">
+    <button type="submit">Показать</button>
+</form>
+
+<h2>Общие показатели</h2>
+<ul>
+    <li>Общий объем продаж: {{ report.total_sales }}</li>
+    <li>Общее количество заказов: {{ report.total_orders }}</li>
+    <li>Общее количество клиентов: {{ report.total_customers }}</li>
+</ul>
+
+<h2>График продаж</h2>
+<div>
+    {{ graph_html|safe }}
+</div>
+
+<div>
+    <a href="{% url 'download_sales_report_csv' %}?start_date={{ start_date }}&end_date={{ end_date }}">Скачать CSV</a> |
+    <a href="{% url 'download_sales_report_pdf' %}?start_date={{ start_date }}&end_date={{ end_date }}">Скачать PDF</a>
+</div>
+
+{% endblock %}

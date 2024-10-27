@@ -40,12 +40,12 @@
     <p class="text-end">Итого: <strong>{{ cart.get_total }} руб.</strong></p>
 
     <!-- Форма для ввода адреса доставки -->
-    <form method="post" class="mt-4">
+    <form method="post" action="{% url 'checkout' %}" class="mt-4">
         {% csrf_token %}
         {% if not user.is_authenticated %}
             <p>Для оформления заказа необходимо <a href="{% url 'login' %}?next={{ request.path }}">войти</a> или <a href="{% url 'register' %}?next={{ request.path }}">зарегистрироваться</a>.</p>
         {% endif %}
-        <div class="form-group mb-3">
+        <div class="form-group mb-3 position-relative">
             <label for="address">Адрес доставки</label>
             <input type="text" name="address" id="address" class="form-control" required placeholder="Введите адрес">
         </div>
@@ -94,7 +94,7 @@
                     suggestionsBox.style.display = 'block';
                     data.suggestions.forEach(item => {
                         const suggestion = document.createElement("li");
-                        suggestion.classList.add("list-group-item");
+                        suggestion.classList.add("list-group-item", "list-group-item-action");
                         suggestion.textContent = item.value;
                         suggestion.addEventListener("click", () => {
                             addressInput.value = item.value; // Установка выбранного значения
@@ -114,11 +114,20 @@
 
         // Закрываем подсказки, если пользователь кликает вне поля ввода
         document.addEventListener("click", function(event) {
-            if (!addressInput.contains(event.target)) {
+            if (!addressInput.contains(event.target) && !suggestionsBox.contains(event.target)) {
+                suggestionsBox.style.display = 'none';
+            }
+        });
+
+        // Закрываем подсказки при нажатии клавиши Esc
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape") {
                 suggestionsBox.style.display = 'none';
             }
         });
     });
 </script>
 {% endblock %}
+
+
 

@@ -185,3 +185,18 @@ body.dark-theme .alert {
     font-size: 1em; /* Размер текста под заголовком */
     color: #fff; /* Цвет текста */
 }
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.success-icon {
+    animation: pulse 2s infinite;
+}
+button {
+    z-index: 1000; /* Сделайте кнопку выше других элементов */
+}

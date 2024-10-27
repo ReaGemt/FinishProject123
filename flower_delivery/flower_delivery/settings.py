@@ -1,7 +1,9 @@
+# flower_delivery\flower_delivery\settings.py
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 import environ
 import os
+from .settings import *
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -94,6 +96,7 @@ LOGIN_REDIRECT_URL = '/'
 # Инициализация переменных окружения
 env = environ.Env()
 environ.Env.read_env('.env')
+env.read_env(env_file='.env.test')
 
 # Telegram Bot Settings
 TELEGRAM_BOT_TOKEN = env("TELEGRAM_BOT_TOKEN", default="your_bot_token_here")
@@ -102,18 +105,14 @@ ENABLE_TELEGRAM_NOTIFICATIONS = env.bool("ENABLE_TELEGRAM_NOTIFICATIONS", defaul
 
 # SMTP настройки
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.yandex.ru'
-EMAIL_PORT = 465
-EMAIL_USE_SSL = True
-EMAIL_USE_TLS = False  # Убедитесь, что TLS отключен
-#Если всё же используется TLS, то обычно используют порт 587:
-#EMAIL_PORT = 587
-#EMAIL_USE_TLS = True
-#EMAIL_USE_SSL = False
-EMAIL_HOST_USER = env('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL')
-ADMIN_EMAIL = env('ADMIN_EMAIL')
+EMAIL_HOST = env('EMAIL_HOST', default='smtp.example.com')
+EMAIL_PORT = env('EMAIL_PORT', default=587)
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
+EMAIL_USE_SSL = env.bool('EMAIL_USE_SSL', default=False)
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='your_default_email@example.com')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='test@example.com')
+ADMIN_EMAIL = env('ADMIN_EMAIL', default='test@example.com')
 ENABLE_EMAIL_NOTIFICATIONS = env.bool("ENABLE_EMAIL_NOTIFICATIONS", default=True)
 
 
@@ -125,13 +124,22 @@ CSRF_COOKIE_HTTPONLY = True
 COOKIE_CONSENT_NAME = 'cookiesAccepted'
 COOKIE_CONSENT_AGE_DAYS = 365
 
-DADATA_API_KEY = env('DADATA_API_KEY')
-DADATA_SECRET_KEY = env('DADATA_SECRET_KEY')
+DADATA_API_KEY = env('DADATA_API_KEY', default='')
+DADATA_SECRET_KEY = env('DADATA_SECRET_KEY', default='')
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 1209600  # Две недели
 
 # Настройки рабочее время
-WORKING_HOURS_START = 9  # Начало рабочего дня (9 утра)
-WORKING_HOURS_END = 18   # Конец рабочего дня (6 вечера)
+WORKING_HOURS_START = 7  # Начало рабочего дня (9 утра)
+WORKING_HOURS_END = 20   # Конец рабочего дня (6 вечера)
 WORKING_DAYS = [0, 1, 2, 3, 4, 5, 6]  # Понедельник - Суббота (0 - Понедельник, 5 - Суббота)
+
+# SECURE_HSTS_SECONDS = 31536000  # Включите строгий транспортный уровень безопасности
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+# SECURE_HSTS_PRELOAD = True
+# SECURE_SSL_REDIRECT = True  # Перенаправление на HTTPS
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'

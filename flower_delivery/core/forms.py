@@ -6,6 +6,9 @@ from .models import Product
 from dadata import Dadata
 from django.conf import settings
 import logging
+from django.utils.translation import gettext_lazy as _
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -48,15 +51,30 @@ class AddressForm(forms.Form):
     address = forms.CharField(max_length=255, label='Адрес',
                               widget=forms.TextInput(attrs={'placeholder': 'Введите адрес'}))
 
-    def clean_address(self, e=None):
-        logger.error(f"Ошибка при подключении к DaData: {e}")
+    def clean_address(self):
         address = self.cleaned_data['address']
         try:
             dadata = Dadata(settings.DADATA_API_KEY, settings.DADATA_SECRET_KEY)
             result = dadata.suggest("address", address)
-            dadata.close()  # Закрываем соединение
             if result and len(result) > 0:
-                return result[0]['value']  # Вернуть подтверждённый адрес
+                return result[0]['value']
         except Exception as e:
-            print(f"Ошибка при подключении к DaData: {e}")
-        raise forms.ValidationError("Не удалось определить адрес. Пожалуйста, проверьте введённые данные.")
+            logger.error(f"Ошибка при подключении к DaData: {e}")
+            raise forms.ValidationError(_("Не удалось определить адрес. Пожалуйста, проверьте введённые данные."))
+        finally:
+            dadata.close()  # Закрываем соединение
+
+class StockUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Product
+        fields = ['stock']
+
+class SalesReportForm(forms.Form):
+    start_date = forms.DateField(
+        label='Начало периода',
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
+    )
+    end_date = forms.DateField(
+        label='Конец периода',
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
+    )

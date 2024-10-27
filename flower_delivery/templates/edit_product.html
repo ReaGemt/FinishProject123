@@ -41,9 +41,9 @@
                     {{ form.category.label_tag }}
                     {{ form.category|add_class:"form-control" }}
                 </div>
-                <div class="mb-3">
-                    {{ form.is_popular.label_tag }}
+                <div class="form-check mb-3">
                     {{ form.is_popular|add_class:"form-check-input" }}
+                    {{ form.is_popular.label_tag|add_class:"form-check-label" }}
                 </div>
             </div>
 
@@ -52,7 +52,7 @@
                 {% if form.instance.image %}
                 <div class="mb-3 text-center">
                     <p>Текущее изображение:</p>
-                    <img src="{{ form.instance.image.url }}" alt="{{ form.instance.name }}" class="img-fluid" style="max-height: 200px;">
+                    <img src="{{ form.instance.image.url }}" alt="{{ form.instance.name }}" class="img-fluid rounded shadow" style="max-height: 200px;">
                 </div>
                 {% endif %}
                 <div class="mb-3">
@@ -69,3 +69,4 @@
     </form>
 </div>
 {% endblock %}
+

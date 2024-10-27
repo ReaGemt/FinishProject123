@@ -22,13 +22,13 @@
 
     <!-- Показать сообщения об успешных изменениях -->
     {% if messages %}
-        <div class="alert alert-success">
-            <ul>
-                {% for message in messages %}
-                    <li>{{ message }}</li>
-                {% endfor %}
-            </ul>
-        </div>
+    <div class="alert alert-success">
+        <ul class="mb-0">
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    </div>
     {% endif %}
 
     <form method="post" class="mb-3">
@@ -57,3 +57,4 @@
     </form>
 </div>
 {% endblock %}
+

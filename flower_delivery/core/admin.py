@@ -1,9 +1,12 @@
 # core/admin.py
+
 from django.contrib import admin
 from django.utils.safestring import mark_safe
-
-from .models import Product, Order, Review, OrderItem
 from django.utils.translation import gettext_lazy as _
+from django.template.response import TemplateResponse
+from django.urls import path
+from .models import Product, Order, Review, Report, OrderItem
+from .utils import generate_sales_report
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
@@ -15,7 +18,6 @@ class ProductAdmin(admin.ModelAdmin):
 
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
-from .models import Order
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
@@ -33,7 +35,7 @@ class OrderAdmin(admin.ModelAdmin):
             f'<a href="/admin/core/product/{item.product.id}/change/">{item.product.name}</a>'
             for item in obj.items.all()
         ]
-        return mark_safe("<br>".join(links))  # Используем <br> для лучшего отображения
+        return mark_safe("<br>".join(links))
 
     get_products.short_description = _('Товары')
     get_products.allow_tags = True
@@ -49,3 +51,16 @@ class ReviewAdmin(admin.ModelAdmin):
     search_fields = ('product__name',)
     verbose_name = _('Отзыв')
     verbose_name_plural = _('Отзывы')
+
+# Объединяем функциональность SalesReportAdmin и ReportAdmin
+@admin.register(Report)
+class ReportAdmin(admin.ModelAdmin):
+    change_list_template = "admin/sales_report.html"
+    list_display = ('created_at', 'total_sales', 'total_orders', 'total_customers')
+    ordering = ('-created_at',)
+
+    def changelist_view(self, request, extra_context=None):
+        report = generate_sales_report()
+        extra_context = extra_context or {}
+        extra_context['report'] = report
+        return super().changelist_view(request, extra_context=extra_context)

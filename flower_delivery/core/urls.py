@@ -1,48 +1,54 @@
-# core/urls.py
+# core\urls.py
 from django.urls import path, include
 from . import views
 from django.contrib.auth import views as auth_views
 from django.conf.urls.static import static
 from django.conf import settings
+from .views import reports_list
+from .views import sales_report
+from .views import popular_products_report
 
 urlpatterns = [
     # Основные маршруты каталога и товаров
-    path('', views.product_list, name='catalog'),  # Главная страница каталога
-    path('product/<int:product_id>/', views.product_detail, name='product_detail'),  # Детали продукта
-    path('add_review/<int:product_id>/', views.add_review, name='add_review'),  # Добавление отзыва
+    path('', views.product_list, name='catalog'),
+    path('product/<int:product_id>/', views.product_detail, name='product_detail'),
+    path('add_review/<int:product_id>/', views.add_review, name='add_review'),
 
     # Маршруты для работы с корзиной
-    path('cart/', views.view_cart, name='view_cart'),  # Просмотр корзины
-    path('add_to_cart/<int:product_id>/', views.add_to_cart, name='add_to_cart'),  # Добавление в корзину
-    path('cart/update/<int:item_id>/', views.update_cart_item, name='update_cart_item'),  # Обновление корзины
-    path('cart/remove/<int:item_id>/', views.remove_cart_item, name='remove_cart_item'),  # Удаление из корзины
+    path('cart/', views.view_cart, name='view_cart'),
+    path('add_to_cart/<int:product_id>/', views.add_to_cart, name='add_to_cart'),
+    path('cart/update/<int:item_id>/', views.update_cart_item, name='update_cart_item'),
+    path('cart/remove/<int:item_id>/', views.remove_cart_item, name='remove_cart_item'),
 
     # Маршруты для оформления заказа
-    path('checkout/', views.checkout, name='checkout'),  # Оформление заказа
-    path('order_history/', views.order_history, name='order_history'),  # История заказов
-    path('order_success/', views.order_success, name='order_success'),  # Успешный заказ
-    path('order/<int:order_id>/', views.order_detail, name='order_detail'),  # Детали заказа
+    path('checkout/', views.checkout, name='checkout'),
+    path('order_history/', views.order_history, name='order_history'),
+    path('order_success/', views.order_success, name='order_success'),
+    path('order/<int:order_id>/', views.order_detail, name='order_detail'),
 
     # Маршруты для работы с пользователями и профилем
-    path('profile/', views.profile, name='profile'),  # Профиль пользователя
-    path('profile/edit/', views.edit_profile, name='edit_profile'),  # Редактирование профиля
-    path('register/', views.register, name='register'),  # Регистрация
-    path('accounts/logout/', auth_views.LogoutView.as_view(), name='logout'),  # Выход из аккаунта
+    path('profile/', views.profile, name='profile'),
+    path('profile/edit/', views.edit_profile, name='edit_profile'),
+    path('register/', views.register, name='register'),
+    path('accounts/login/', auth_views.LoginView.as_view(), name='login'),
+    path('accounts/logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('password_change/', auth_views.PasswordChangeView.as_view(), name='password_change'),
+    path('password_change_done/', auth_views.PasswordChangeDoneView.as_view(), name='password_change_done'),
 
     # Управление пользователями (администратором)
-    path('admin/users/', views.user_list, name='user_list'),  # Список пользователей
-    path('admin/users/edit/<int:user_id>/', views.edit_user, name='edit_user'),  # Редактирование пользователя
-    path('admin/users/delete/<int:user_id>/', views.delete_user, name='delete_user'),  # Удаление пользователя
+    path('manage/users/', views.user_list, name='user_list'),
+    path('manage/users/edit/<int:user_id>/', views.edit_user, name='edit_user'),
+    path('manage/users/delete/<int:user_id>/', views.delete_user, name='delete_user'),
 
     # Управление продуктами (администратором/менеджером)
-    path('admin/products/add/', views.add_product, name='add_product'),  # Добавление продукта
-    path('admin/products/edit/<int:product_id>/', views.edit_product, name='edit_product'),  # Редактирование продукта
-    path('admin/products/remove/<int:product_id>/', views.remove_product, name='remove_product'),  # Удаление продукта
+    path('manage/products/add/', views.add_product, name='add_product'),
+    path('manage/products/edit/<int:product_id>/', views.edit_product, name='edit_product'),
+    path('manage/products/remove/<int:product_id>/', views.remove_product, name='remove_product'),
 
     # Статические страницы
-    path('about/', views.about, name='about'),  # О компании
-    path('contact/', views.contact, name='contact'),  # Контакты
-    path('privacy-policy/', views.privacy_policy, name='privacy_policy'),  # Политика конфиденциальности
+    path('about/', views.about, name='about'),
+    path('contact/', views.contact, name='contact'),
+    path('privacy-policy/', views.privacy_policy, name='privacy_policy'),
 
     # Дополнительно: Восстановление пароля
     path('password_reset/', auth_views.PasswordResetView.as_view(), name='password_reset'),
@@ -53,5 +59,20 @@ urlpatterns = [
     # Дополнительно: Интеграция с другими функциями
     path("send_message/", views.send_message, name="send_message"),
     path('change_currency/', views.change_currency, name='change_currency'),
+    path('repeat_order/<int:order_id>/', views.repeat_order, name='repeat_order'),
+    path('order/<int:order_id>/', views.order_detail, name='order_detail'),
+    path('order_success/<int:order_id>/', views.order_success, name='order_success'),
     path('dadata/suggest-address/', views.suggest_address, name='suggest_address'),
+    path('manage/reports/', views.sales_report, name='sales_report'),
+    path('generate_pdf/', views.generate_pdf, name='generate_pdf'),
+    path('sales_report/', views.sales_report, name='sales_report'),
+    path('download_sales_report_csv/', views.download_sales_report_csv, name='download_sales_report_csv'),
+    path('admin/core/report/', views.sales_report, name='sales_report'),
+    path('reports/sales/', sales_report, name='sales_report'),
+    path('reports/popular-products/', popular_products_report, name='popular_products_report'),
+    path('reports/', reports_list, name='reports_list'),
+    path('reports/sales/', views.sales_report, name='sales_report'),
+    path('reports/sales/download/csv/', views.download_sales_report_csv, name='download_sales_report_csv'),
+    path('reports/sales/download/pdf/', views.download_sales_report_pdf, name='download_sales_report_pdf'),
+    path('download_sales_report_pdf/', views.download_sales_report_pdf, name='download_sales_report_pdf'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -26,7 +26,7 @@
                     <td>{{ item.product.price }} руб.</td>
                     <td class="item-total">{{ item.get_total_price }} руб.</td>
                     <td>
-                        <a href="{% url 'remove_cart_item' item.id %}" class="btn btn-sm btn-danger">Удалить</a>
+                        <button class="btn btn-sm btn-danger remove-item-btn">Удалить</button>
                     </td>
                 </tr>
                 {% endfor %}
@@ -45,6 +45,7 @@
 {% endif %}
 
 <script>
+    // Функция для предотвращения частых запросов к серверу
     const debounce = (func, delay) => {
         let timeoutId;
         return (...args) => {
@@ -57,6 +58,7 @@
         };
     };
 
+    // Функция обновления количества товаров в корзине
     const updateCartItem = debounce(function(itemId, newQuantity) {
         fetch(`/cart/update/${itemId}/`, {
             method: 'POST',
@@ -80,11 +82,42 @@
         .catch(error => console.error('Ошибка:', error));
     }, 500); // Задержка в 500 мс перед отправкой запроса
 
+    // Добавляем обработчик событий для изменения количества товара
     document.querySelectorAll('.quantity-input').forEach(function(input) {
         input.addEventListener('change', function() {
             const newQuantity = this.value;
             const itemId = this.closest('tr').getAttribute('data-item-id');
-            updateCartItem(itemId, newQuantity);
+            if (newQuantity > 0) {
+                updateCartItem(itemId, newQuantity);
+            } else {
+                alert('Количество должно быть положительным числом.');
+                this.value = 1; // Восстанавливаем количество до минимального значения
+            }
+        });
+    });
+
+    // Обработчик для удаления товаров из корзины
+    document.querySelectorAll('.remove-item-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const itemId = this.closest('tr').getAttribute('data-item-id');
+            fetch(`/cart/remove/${itemId}/`, {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    this.closest('tr').remove();
+                    // Пересчитать итоговую сумму
+                    const newTotal = Array.from(document.querySelectorAll('.item-total'))
+                        .reduce((total, element) => total + parseFloat(element.textContent), 0);
+                    document.getElementById('cart-total').textContent = `${newTotal.toFixed(2)} руб.`;
+                } else {
+                    alert('Ошибка удаления товара из корзины');
+                }
+            })
+            .catch(error => console.error('Ошибка:', error));
         });
     });
 </script>

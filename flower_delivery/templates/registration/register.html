@@ -2,13 +2,14 @@
 {% extends 'base.html' %}
 {% block title %}Регистрация{% endblock %}
 {% load form_filters %}
+{% load static %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6">
         {% if messages %}
             <div class="alert alert-info">
-                <ul>
+                <ul class="mb-0">
                     {% for message in messages %}
                         <li>{{ message }}</li>
                     {% endfor %}
@@ -29,7 +30,16 @@
             {% for field in form %}
                 <div class="mb-3">
                     <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                    {{ field|add_class:"form-control" }}
+                    <div class="input-group">
+                        {% if field.name == "username" %}
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                        {% elif field.name == "email" %}
+                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                        {% elif field.name == "password1" or field.name == "password2" %}
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        {% endif %}
+                        {{ field|add_class:"form-control" }} required
+                    </div>
                     {% if field.help_text %}
                         <small id="{{ field.id_for_label }}-help" class="form-text text-muted">{{ field.help_text }}</small>
                     {% endif %}

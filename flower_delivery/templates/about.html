@@ -2,6 +2,7 @@
 {% extends 'base.html' %}
 {% block title %}О нас{% endblock %}
 {% load static %}
+
 {% block content %}
 <div class="container mt-4">
     <h2 class="text-center mb-4">О нас</h2>
@@ -34,9 +35,9 @@
     </div>
 
     <!-- Раздел с социальными сетями -->
-    <div class="text-center mt-4">
+    <div class="text-center mt-5">
         <h4>Следите за нами в социальных сетях</h4>
-        <div class="d-flex justify-content-center">
+        <div class="d-flex justify-content-center mt-3">
             <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" class="me-3" aria-label="Facebook">
                 <img src="{% static 'images/facebook.png' %}" alt="Facebook" class="img-thumbnail" style="width: 40px;">
             </a>
@@ -46,6 +47,14 @@
             <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
                 <img src="{% static 'images/twitter.png' %}" alt="Twitter" class="img-thumbnail" style="width: 40px;">
             </a>
+        </div>
+    </div>
+
+    <!-- Дополнительный блок с контактами -->
+    <div class="row mt-5">
+        <div class="col-md-12">
+            <h4 class="text-center">Контактная информация</h4>
+            <p class="text-center">Если у вас есть вопросы, свяжитесь с нами по телефону <a href="tel:+74951234567">+7 (495) 123-45-67</a> или по email <a href="mailto:info@flowerdelivery.ru">info@flowerdelivery.ru</a>.</p>
         </div>
     </div>
 </div>

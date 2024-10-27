@@ -39,6 +39,7 @@
                                 <th scope="col">Дата заказа</th>
                                 <th scope="col">Общая сумма</th>
                                 <th scope="col">Статус</th>
+                                <th scope="col">Действие</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -57,6 +58,9 @@
                                         {{ order.get_status_display }}
                                     </span>
                                 </td>
+                                <td>
+                                    <a href="{% url 'repeat_order' order.id %}" class="btn btn-sm btn-outline-secondary">Повторить заказ</a>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -72,5 +76,3 @@
     </div>
 </div>
 {% endblock %}
-
-

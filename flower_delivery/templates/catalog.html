@@ -12,7 +12,7 @@
     <div class="row">
         {% if products %}
             {% for product in products %}
-                 <div class="col-md-4 mb-4">
+                <div class="col-md-4 mb-4">
                     <div class="card h-100 position-relative d-flex flex-column">
                         {% if product.is_popular %}
                             <div class="sticker">Популярно</div> <!-- Проверка на популярность -->
@@ -89,6 +89,19 @@
     .modal-content .btn {
         width: 45%;
     }
+
+    .sticker {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background-color: #ffc107;
+        color: white;
+        padding: 5px 10px;
+        font-size: 12px;
+        border-radius: 5px;
+        text-transform: uppercase;
+        font-weight: bold;
+    }
 </style>
 
 <script>
@@ -144,6 +157,13 @@
             modal.style.display = 'none';
         }
     });
+
+    // Закрытие модального окна при нажатии на клавишу Esc
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            const modal = document.getElementById('cart-modal');
+            modal.style.display = 'none';
+        }
+    });
 </script>
 {% endblock %}
-

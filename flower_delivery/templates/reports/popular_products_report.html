@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Отчет по популярным продуктам</h1>
+
+<form method="get">
+    <label for="start_date">Дата начала:</label>
+    <input type="date" id="start_date" name="start_date" value="{{ start_date }}">
+    <label for="end_date">Дата окончания:</label>
+    <input type="date" id="end_date" name="end_date" value="{{ end_date }}">
+    <button type="submit">Показать</button>
+</form>
+
+<table>
+    <thead>
+        <tr>
+            <th>Продукт</th>
+            <th>Продано единиц</th>
+            <th>Сумма продаж</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in order_items %}
+        <tr>
+            <td>{{ item.product__name }}</td>
+            <td>{{ item.total_quantity }}</td>
+            <td>{{ item.total_sales }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

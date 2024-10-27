@@ -5,6 +5,9 @@ from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
 import os
 from django.conf import settings
+from django.db.models import Sum, F
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 # Telegram Bot Integration
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -32,12 +35,22 @@ class Product(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='products')
     rating = models.DecimalField(max_digits=2, decimal_places=1, default=5.0)
     objects = ProductManager()
+    stock = models.PositiveIntegerField(default=0)  # Поле для отслеживания количества на складе
 
     def __str__(self):
         return self.name
 
     def get_category_display(self):
         return dict(self.CATEGORY_CHOICES).get(self.category)
+
+    def is_in_stock(self, quantity=1):
+        return self.stock >= quantity
+
+    def clean(self):
+        if self.price <= 0:
+            raise ValidationError(_('Цена должна быть положительной.'))
+        if self.stock < 0:
+            raise ValidationError(_('Количество на складе не может быть отрицательным.'))
 
     class Meta:
         verbose_name = _('Продукт')
@@ -55,7 +68,8 @@ class Cart(models.Model):
         return f"Корзина сессии: {self.session}"
 
     def get_total(self):
-        return sum(item.get_total_price() for item in self.items.all())
+        total = self.items.aggregate(total=Sum(F('quantity') * F('product__price')))['total']
+        return total if total else 0
 
     class Meta:
         verbose_name = _('Корзина')
@@ -76,6 +90,7 @@ class CartItem(models.Model):
     class Meta:
         verbose_name = _('Элемент корзины')
         verbose_name_plural = _('Элементы корзины')
+        unique_together = ('cart', 'product')
 
 # Модель заказа
 # core/models.py
@@ -113,6 +128,22 @@ class Order(models.Model):
     def get_total_price(self):
         return sum(item.product.price * item.quantity for item in self.items.all())
 
+    def colored_status(self):
+        status_colors = {
+            'pending': 'orange',
+            'confirmed': 'blue',
+            'shipped': 'green',
+            'delivered': 'green',
+            'canceled': 'red'
+        }
+        color = status_colors.get(self.status, 'black')
+        return format_html(f'<span style="color: {color};">{self.get_status_display()}</span>')
+
+    def update_status(self, new_status):
+        if new_status in dict(self.STATUS_CHOICES):
+            self.status = new_status
+            self.save()
+
     class Meta:
         verbose_name = _('Заказ')
         verbose_name_plural = _('Заказы')
@@ -129,6 +160,11 @@ class OrderItem(models.Model):
 
     def get_total_price(self):
         return self.product.price * self.quantity
+
+    def update_status(self, new_status):
+        if new_status in dict(self.STATUS_CHOICES):
+            self.status = new_status
+            self.save()
 
     class Meta:
         verbose_name = _('Элемент заказа')
@@ -159,3 +195,23 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"Профиль {self.user.username}"
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.create(user=instance)
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    instance.profile.save()
+
+
+class Report(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    total_sales = models.DecimalField(max_digits=10, decimal_places=2)
+    total_orders = models.PositiveIntegerField()
+    total_customers = models.PositiveIntegerField()
+
+    def __str__(self):
+        return f"Отчет за {self.created_at.strftime('%Y-%m-%d')}"

@@ -1,21 +1,44 @@
 <!-- templates\order_detail.html-->
 {% extends 'base.html' %}
+{% load static %}
 {% block content %}
 <div class="container mt-4">
     <h2 class="text-center mb-4">Детали заказа №{{ order.id }}</h2>
 
     <div class="mb-3">
-        <p><strong>Дата заказа:</strong> {{ order.created_at|date:"d.m.Y H:i" }}</p>
-        <p><strong>Статус заказа:</strong> {{ order.get_status_display }}</p>
+        <p>
+            <i class="fas fa-calendar-alt"></i>
+            <strong>Дата заказа:</strong> {{ order.created_at|date:"d.m.Y H:i" }}
+        </p>
+        <p>
+            <i class="fas fa-info-circle"></i>
+            <strong>Статус заказа:</strong>
+            <span class="badge
+                {% if order.status == 'pending' %} bg-warning
+                {% elif order.status == 'confirmed' %} bg-primary
+                {% elif order.status == 'shipped' %} bg-info
+                {% elif order.status == 'delivered' %} bg-success
+                {% elif order.status == 'canceled' %} bg-danger
+                {% endif %}
+            ">
+                {{ order.get_status_display }}
+            </span>
+        </p>
         {% if order.address %}
-            <p><strong>Адрес доставки:</strong> {{ order.address }}</p>
+            <p>
+                <i class="fas fa-map-marker-alt"></i>
+                <strong>Адрес доставки:</strong> {{ order.address }}
+            </p>
         {% endif %}
         {% if order.comments %}
-            <p><strong>Комментарии к заказу:</strong> {{ order.comments }}</p>
+            <p>
+                <i class="fas fa-comment-dots"></i>
+                <strong>Комментарии к заказу:</strong> {{ order.comments }}
+            </p>
         {% endif %}
     </div>
 
-    <h4>Товары:</h4>
+    <h4><i class="fas fa-box"></i> Товары:</h4>
     {% if order.items.all %}
         <ul class="list-group mb-3">
             {% for item in order.items.all %}
@@ -28,7 +51,9 @@
                 </li>
             {% endfor %}
         </ul>
-        <p class="text-end fs-5"><strong>Общая сумма:</strong> {{ total_price }} руб.</p>
+        <p class="text-end fs-5">
+            <i class="fas fa-coins"></i> <strong>Общая сумма:</strong> {{ total_price }} руб.
+        </p>
     {% else %}
         <p class="text-center">В заказе нет товаров.</p>
     {% endif %}

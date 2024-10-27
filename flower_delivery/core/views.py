@@ -1,3 +1,4 @@
+# core\views.py
 import pytz
 import logging
 import json
@@ -14,7 +15,45 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
-from telegram import Bot
+from datetime import datetime
+from .forms import StockUpdateForm
+from .utils import generate_sales_report
+from django.contrib.auth.decorators import user_passes_test
+import plotly.express as px
+import plotly.io as pio
+from .utils import generate_sales_report_by_period
+import csv
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from django.http import HttpResponse
+import matplotlib.pyplot as plt
+import os
+from io import BytesIO
+import tempfile
+from .forms import SalesReportForm
+from datetime import timedelta
+from django.utils.dateparse import parse_date
+from django.shortcuts import render
+import plotly.express as px
+import pandas as pd
+from .utils import generate_sales_report_by_period, generate_sales_report_by_custom_period
+from django.http import HttpResponse
+from reportlab.pdfgen import canvas
+from io import BytesIO
+from .utils import generate_sales_report_by_custom_period
+from datetime import datetime
+import plotly.io as pio
+from django.shortcuts import render
+from django.contrib.admin.views.decorators import staff_member_required
+from core.models import Report
+from django.shortcuts import render
+from django.contrib.admin.views.decorators import staff_member_required
+from django.db.models import Sum, Count, F
+from django.utils import timezone
+from django.db.models.functions import TruncDate
+from django.utils import timezone
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -22,6 +61,13 @@ logger = logging.getLogger(__name__)
 # Constants for working hours
 WORKING_HOURS_START = 9  # Начало рабочего времени (9 утра)
 WORKING_HOURS_END = 18  # Конец рабочего времени (6 вечера)
+
+
+date_str = '2024-10-27'
+naive_datetime = datetime.strptime(date_str, '%Y-%m-%d')
+aware_datetime = timezone.make_aware(naive_datetime)
+
+
 
 # Utility functions
 def is_within_working_hours():
@@ -33,18 +79,34 @@ def is_manager(user):
     """Проверяет, является ли пользователь менеджером или администратором."""
     return user.groups.filter(name='Менеджеры').exists() or user.is_superuser
 
+# Функция для проверки, является ли пользователь администратором
 def is_admin(user):
-    """Проверяет, является ли пользователь администратором."""
-    return user.is_superuser
+    return user.is_staff
+
+@user_passes_test(is_admin)
+def update_stock(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    if request.method == 'POST':
+        form = StockUpdateForm(request.POST, instance=product)
+        if form.is_valid():
+            form.save()
+            return redirect('product_detail', product_id=product.id)  # Перенаправление после обновления
+    else:
+        form = StockUpdateForm(instance=product)
+    return render(request, 'update_stock.html', {'form': form, 'product': product})
 
 def product_list(request):
     category = request.GET.get('category')
     products = Product.objects.filter(category=category) if category else Product.objects.all()
-    products = products.order_by('name')  # Сортировка по имени
+    # Используйте один из предложенных вариантов ниже
+    products = products.order_by('name').select_related('created_by')  # Вариант 1
+    # или
+    # products = products.order_by('name').only('id', 'name', 'price', 'created_by_id')  # Вариант 2
     paginator = Paginator(products, 6)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     return render(request, 'catalog.html', {'page_obj': page_obj, 'products': page_obj.object_list, 'is_paginated': True})
+
 
 def get_or_create_cart(request):
     """Функция для получения или создания корзины, привязанной к пользователю или сессии"""
@@ -66,22 +128,30 @@ def add_to_cart(request, product_id):
         quantity = int(request.POST.get('quantity', 1))
         if quantity <= 0:
             raise ValueError("Количество должно быть положительным числом.")
-    except ValueError:
-        messages.error(request, "Некорректное количество товара.")
+        if product.stock < quantity:  # Предположим, что есть поле stock для количества товара на складе
+            raise ValueError("Недостаточно товара на складе.")
+    except ValueError as e:
+        messages.error(request, str(e))
         return redirect('view_cart')
 
     cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
     if not created:
-        cart_item.quantity += quantity
+        from django.db.models import F
+        cart_item.quantity = F('quantity') + quantity
     else:
         cart_item.quantity = quantity
     cart_item.save()
+
+    # Очистка кэша корзины, если используется кэширование
+    from django.core.cache import cache
+    cache.delete(f'cart_{request.user.id}' if request.user.is_authenticated else f'session_{request.session.session_key}')
 
     message = f'Товар "{product.name}" добавлен в корзину. Количество: {cart_item.quantity}.'
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({'message': message})
 
     return redirect('view_cart')
+
 
 def view_cart(request):
     cart = get_or_create_cart(request)
@@ -116,20 +186,29 @@ def remove_cart_item(request, item_id):
     messages.success(request, 'Товар удалён из корзины.')
     return redirect('view_cart')
 
+from django.shortcuts import redirect, render
+from django.contrib import messages
+import logging
+
+logger = logging.getLogger(__name__)
+
 @login_required
 def checkout(request):
     if not is_within_working_hours():
+        logger.info("Attempt to place an order outside working hours.")
         messages.error(request, 'Заказы принимаются только в рабочее время (с 9:00 до 18:00).')
         return redirect('view_cart')
 
     cart = get_or_create_cart(request)
     if not cart.items.exists():
+        logger.info("Attempt to checkout with an empty cart.")
         messages.error(request, 'Ваша корзина пуста. Пожалуйста, добавьте товары перед оформлением заказа.')
         return redirect('view_cart')
 
     if request.method == "POST":
         address = request.POST.get('address')
         comments = request.POST.get('comments', '')
+        logger.info(f"Received address: {address}, comments: {comments}")
 
         try:
             # Создание заказа
@@ -137,35 +216,10 @@ def checkout(request):
             for item in cart.items.all():
                 OrderItem.objects.create(order=order, product=item.product, quantity=item.quantity)
 
-            # Формирование сообщения для уведомлений
-            product_list = "\n".join([f"{item.product.name} x{item.quantity}" for item in cart.items.all()])
-            message = (
-                f"Новый заказ от {request.user.username}.\n"
-                f"Адрес: {address}\n"
-                f"Комментарии: {comments}\n"
-                f"Товары:\n{product_list}"
-            )
-
-            # Уведомление через Telegram
-            if settings.ENABLE_TELEGRAM_NOTIFICATIONS and settings.TELEGRAM_BOT_TOKEN and settings.ADMIN_TELEGRAM_CHAT_ID:
-                bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
-                try:
-                    bot.send_message(chat_id=settings.ADMIN_TELEGRAM_CHAT_ID, text=message)
-                except Exception as e:
-                    logger.error(f"Ошибка отправки сообщения в Telegram: {e}")
-
-            # Уведомление по email
-            if settings.ENABLE_EMAIL_NOTIFICATIONS:
-                try:
-                    subject = "Новый заказ на сайте"
-                    send_mail(subject, message, settings.EMAIL_HOST_USER, [settings.ADMIN_EMAIL])
-                except Exception as e:
-                    logger.error(f"Ошибка отправки email: {e}")
-
             # Очистка корзины после оформления заказа
             cart.items.all().delete()
             messages.success(request, 'Ваш заказ успешно оформлен.')
-            return redirect('order_success')
+            return redirect('order_success', order_id=order.id)
 
         except Exception as e:
             # Логирование ошибки и сообщение для пользователя
@@ -295,8 +349,9 @@ def edit_user(request, user_id):
 
     return render(request, 'edit_user.html', {'form': form, 'user': user})
 
-def order_success(request):
-    return render(request, 'order_success.html')
+def order_success(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    return render(request, 'order_success.html', {'order': order})
 
 @user_passes_test(is_manager)
 def remove_product(request, product_id):
@@ -404,3 +459,228 @@ def order_detail(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     total_price = sum(item.get_total_price() for item in order.items.all())
     return render(request, 'order_detail.html', {'order': order, 'total_price': total_price})
+
+
+def repeat_order(request, order_id):
+    """Функция для повторного заказа"""
+    original_order = get_object_or_404(Order, id=order_id, user=request.user)
+    cart, created = Cart.objects.get_or_create(user=request.user)
+
+    for item in original_order.items.all():
+        # Проверяем, есть ли уже этот товар в корзине
+        cart_item, created = CartItem.objects.get_or_create(cart=cart, product=item.product)
+        if not created:
+            cart_item.quantity += item.quantity  # Увеличиваем количество, если товар уже есть
+        else:
+            cart_item.quantity = item.quantity  # Иначе добавляем новое количество
+        cart_item.save()
+
+    messages.success(request, 'Товары из заказа были добавлены в вашу корзину.')
+    return redirect('view_cart')
+
+def is_manager(user):
+    return user.is_superuser or user.groups.filter(name='Менеджеры').exists()
+
+
+# core/views.py
+
+from django.contrib.auth.decorators import user_passes_test
+from .utils import generate_sales_report_by_custom_period
+import plotly.express as px
+import plotly.io as pio
+from django.shortcuts import render
+from datetime import datetime
+
+def is_manager(user):
+    return user.is_superuser or user.groups.filter(name='Менеджеры').exists()
+
+def sales_report(request):
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+
+    if start_date_str and end_date_str:
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+    else:
+        start_date = None
+        end_date = None
+
+    report = generate_sales_report(start_date=start_date, end_date=end_date)
+
+    # Подготовка данных для графика
+    dates = [entry['date'].strftime('%Y-%m-%d') for entry in report['daily_sales']]
+    sales = [float(entry['total_sales']) for entry in report['daily_sales']]
+
+    fig = px.line(x=dates, y=sales, labels={'x': 'Дата', 'y': 'Сумма продаж'}, title='Продажи по дням')
+    graph_html = fig.to_html(full_html=False)
+
+    return render(request, 'admin/sales_report.html', {
+        'report': report,
+        'graph_html': graph_html,
+        'start_date': start_date_str,
+        'end_date': end_date_str,
+    })
+
+def download_sales_report_csv(request):
+    report = generate_sales_report_by_custom_period()
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="sales_report.csv"'
+
+    # Используем UTF-8 с BOM для корректного отображения в Excel
+    response.write('\ufeff'.encode('utf8'))
+    writer = csv.writer(response)
+
+    writer.writerow(['Показатель', 'Значение'])
+    writer.writerow(['Общий объем продаж', report['total_sales']])
+    writer.writerow(['Общее количество заказов', report['total_orders']])
+    writer.writerow(['Общее количество клиентов', report['total_customers']])
+
+    return response
+
+
+def generate_pdf(request):
+    # Создаем HTTP-ответ с типом содержимого 'application/pdf'
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="report.pdf"'
+
+    # Создаем объект canvas для генерации PDF
+    p = canvas.Canvas(response, pagesize=letter)
+
+    # Добавляем текст на страницу
+    p.drawString(100, 750, "Отчет по продажам")
+    p.drawString(100, 700, "Общий доход: 5000 руб.")
+    p.drawString(100, 650, "Количество заказов: 200")
+
+    # Заканчиваем страницу и сохраняем PDF
+    p.showPage()
+    p.save()
+
+    return response
+
+
+def download_sales_report_pdf(request):
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+
+    if start_date_str and end_date_str:
+        # Парсим даты из строк
+        naive_start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+        naive_end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+
+        # Преобразуем в осознанные объекты datetime
+        start_date = timezone.make_aware(naive_start_date)
+        end_date = timezone.make_aware(naive_end_date)
+    else:
+        end_date = timezone.now()
+        start_date = end_date - timedelta(days=30)
+        report = generate_sales_report_by_custom_period(start_date, end_date)
+        period_description = "за последние 30 дней"
+
+    # Создание PDF отчёта
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=letter)
+
+    # Заголовок
+    p.drawString(100, 750, f"Отчёт по продажам {period_description}")
+
+    # Данные отчёта
+    p.drawString(100, 720, f"Общий объём продаж: {report['total_sales']} руб.")
+    p.drawString(100, 700, f"Общее количество заказов: {report['total_orders']}")
+    p.drawString(100, 680, f"Общее количество клиентов: {report['total_customers']}")
+
+    # Создание графика с Plotly
+    data = {
+        "Показатель": ["Продажи", "Заказы", "Клиенты"],
+        "Значение": [report['total_sales'], report['total_orders'], report['total_customers']]
+    }
+    fig = px.bar(data, x="Показатель", y="Значение", title="Отчёт по продажам")
+    graph_buffer = BytesIO()
+    fig.write_image(graph_buffer, format='png')
+    graph_buffer.seek(0)
+
+    # Добавление графика в PDF
+    p.drawImage(graph_buffer, 100, 400, width=400, height=200)
+
+    # Завершение PDF
+    p.showPage()
+    p.save()
+
+    # Сохранение PDF
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="sales_report.pdf"'
+    return response
+
+
+@staff_member_required
+def reports_list(request):
+    reports = Report.objects.order_by('-created_at')
+    return render(request, 'reports/reports_list.html', {'reports': reports})
+
+@staff_member_required
+def sales_report(request):
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+
+    if start_date_str and end_date_str:
+        # Парсим даты из строк
+        naive_start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+        naive_end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+
+        # Преобразуем в осознанные объекты datetime
+        start_date = timezone.make_aware(naive_start_date)
+        end_date = timezone.make_aware(naive_end_date)
+    else:
+        end_date = timezone.now()
+        start_date = end_date - timedelta(days=30)
+
+    # Генерируем отчёт по выбранному периоду
+    report = generate_sales_report_by_custom_period(start_date, end_date)
+
+    # Данные для графика
+    data = {
+        "Показатель": ["Продажи", "Заказы", "Клиенты"],
+        "Значение": [report['total_sales'], report['total_orders'], report['total_customers']]
+    }
+
+    # Генерация графика с Plotly
+    fig = px.bar(data, x="Показатель", y="Значение", title="Отчет по продажам")
+    graph_html = fig.to_html(full_html=False)
+
+    # Передаём данные в шаблон
+    return render(request, 'admin/sales_report.html', {
+        'report': report,
+        'graph_html': graph_html,
+        'start_date': start_date.strftime('%Y-%m-%d'),
+        'end_date': end_date.strftime('%Y-%m-%d'),
+    })
+
+@staff_member_required
+def popular_products_report(request):
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+
+    if start_date_str and end_date_str:
+        start_date = timezone.datetime.strptime(start_date_str, '%Y-%m-%d')
+        end_date = timezone.datetime.strptime(end_date_str, '%Y-%m-%d')
+    else:
+        end_date = timezone.now()
+        start_date = end_date - timezone.timedelta(days=30)
+
+    order_items = OrderItem.objects.filter(
+        order__created_at__range=[start_date, end_date],
+        order__status='delivered'
+    ).values(
+        'product__name'
+    ).annotate(
+        total_quantity=Sum('quantity'),
+        total_sales=Sum(F('quantity') * F('product__price'))
+    ).order_by('-total_quantity')
+
+    context = {
+        'order_items': order_items,
+        'start_date': start_date.date(),
+        'end_date': end_date.date(),
+    }
+    return render(request, 'reports/popular_products_report.html', context)

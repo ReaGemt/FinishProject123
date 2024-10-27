@@ -21,7 +21,14 @@
         {% for field in form %}
             <div class="mb-3">
                 <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                {{ field|add_class:"form-control" }}
+                <div class="input-group">
+                    {% if field.name == "price" %}
+                        <span class="input-group-text">₽</span>
+                    {% elif field.name == "image" %}
+                        <span class="input-group-text"><i class="bi bi-image"></i></span>
+                    {% endif %}
+                    {{ field|add_class:"form-control" }}
+                </div>
                 {% if field.help_text %}
                     <small class="form-text text-muted">{{ field.help_text }}</small>
                 {% endif %}
