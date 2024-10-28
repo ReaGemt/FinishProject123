@@ -85,7 +85,6 @@ async def start_order(update: Update, context: CallbackContext) -> int:
             "Заказы принимаются только в рабочее время (с 9:00 до 18:00).\n"
             "Заказы, присланные в нерабочее время, будут обработаны на следующий рабочий день."
         )
-        return ConversationHandler.END
 
     products = await sync_to_async(list)(Product.objects.all())
     if products:
@@ -102,24 +101,29 @@ async def start_order(update: Update, context: CallbackContext) -> int:
 # Обработчик для выбора продукта
 async def handle_product_selection(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
-    await query.answer()
-    product_id = int(query.data.split("_")[1])
-    product = await sync_to_async(Product.objects.get)(id=product_id)
-    context.user_data['product'] = product
+    try:
+        await query.answer()
+        product_id = int(query.data.split("_")[1])
+        product = await sync_to_async(Product.objects.get)(id=product_id)
+        context.user_data['product'] = product
 
-    keyboard = [
-        [InlineKeyboardButton("1", callback_data="quantity_1"),
-         InlineKeyboardButton("5", callback_data="quantity_5"),
-         InlineKeyboardButton("10", callback_data="quantity_10")],
-        [InlineKeyboardButton("20", callback_data="quantity_20"),
-         InlineKeyboardButton("50", callback_data="quantity_50")],
-        [InlineKeyboardButton("Ввести количество вручную", callback_data="custom_quantity")]
-    ]
-    await query.edit_message_text(
-        text=f"Вы выбрали: {product.name}. Выберите количество:",
-        reply_markup=InlineKeyboardMarkup(keyboard)
-    )
-    return SELECT_QUANTITY
+        keyboard = [
+            [InlineKeyboardButton("1", callback_data="quantity_1"),
+             InlineKeyboardButton("5", callback_data="quantity_5"),
+             InlineKeyboardButton("10", callback_data="quantity_10")],
+            [InlineKeyboardButton("20", callback_data="quantity_20"),
+             InlineKeyboardButton("50", callback_data="quantity_50")],
+            [InlineKeyboardButton("Ввести количество вручную", callback_data="custom_quantity")]
+        ]
+        await query.edit_message_text(
+            text=f"Вы выбрали: {product.name}. Выберите количество:",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+        return SELECT_QUANTITY
+    except Exception as e:
+        logger.error(f"Ошибка при выборе продукта: {e}")
+        await query.message.reply_text("Произошла ошибка. Пожалуйста, попробуйте еще раз.")
+        return ConversationHandler.END
 
 # Обработчик для выбора количества
 async def handle_quantity_selection(update: Update, context: CallbackContext) -> int:
@@ -200,191 +204,7 @@ async def cancel_order(update: Update, context: CallbackContext) -> int:
     await query.edit_message_text(text="Ваш заказ был отменен.")
     return ConversationHandler.END
 
-# Обработчик для других кнопок
-async def button_handler(update: Update, context: CallbackContext) -> None:
-    query = update.callback_query
-    await query.answer()
-    logger.info(f"Получен запрос кнопки: {query.data} от пользователя {query.from_user.id}")
-
-    if query.data == 'catalog':
-        await send_catalog(update, context, from_callback=True)
-    elif query.data == 'status':
-        await check_status(update, context, from_callback=True)
-    elif query.data == 'help':
-        await help_command(update, context, from_callback=True)
-    elif query.data == 'register':
-        await register_user(update, context, from_callback=True)
-    elif query.data == 'manage_orders':
-        await manage_orders(update, context)
-    elif query.data.startswith('order_'):
-        await order_status_handler(update, context)
-    elif query.data.startswith('status_'):
-        await set_order_status(update, context)
-    else:
-        logger.warning(f"Неизвестная команда: {query.data}")
-
-# Реализация функции управления заказами для администратора
-async def manage_orders(update: Update, context: CallbackContext) -> None:
-    query = update.callback_query
-    user_chat_id = query.message.chat_id
-    await query.answer()
-    logger.info(f"Пользователь {user_chat_id} запросил управление заказами.")
-
-    if str(user_chat_id) != str(ADMIN_TELEGRAM_CHAT_ID):
-        await context.bot.send_message(chat_id=user_chat_id, text="У вас нет прав для использования этой команды.")
-        return
-
-    orders = await sync_to_async(lambda: list(Order.objects.all().order_by('-created_at')))()
-    if not orders:
-        await context.bot.send_message(chat_id=ADMIN_TELEGRAM_CHAT_ID, text="Нет активных заказов для управления.")
-        return
-
-    keyboard = []
-    for order in orders:
-        user = await sync_to_async(lambda: order.user.username if order.user else "Неизвестный пользователь")()
-        order_text = f"Заказ {order.id}: {user} - Статус: {order.get_status_display()}"
-        keyboard.append([InlineKeyboardButton(order_text, callback_data=f"order_{order.id}")])
-
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await context.bot.send_message(chat_id=ADMIN_TELEGRAM_CHAT_ID, text="Выберите заказ для изменения статуса:",
-                                   reply_markup=reply_markup)
-
-# Обработчик для выбора заказа администратором
-async def order_status_handler(update: Update, context: CallbackContext) -> None:
-    query = update.callback_query
-    await query.answer()
-    user_chat_id = query.message.chat_id
-    logger.info(f"Пользователь {user_chat_id} пытается изменить статус заказа.")
-
-    if str(user_chat_id) != str(ADMIN_TELEGRAM_CHAT_ID):
-        await context.bot.send_message(chat_id=user_chat_id, text="У вас нет прав для использования этой команды.")
-        return
-
-    order_id = int(query.data.split("_")[1])
-    order = await sync_to_async(Order.objects.get)(id=order_id)
-
-    keyboard = [
-        [InlineKeyboardButton("В обработке", callback_data=f"status_{order.id}_processing")],
-        [InlineKeyboardButton("Доставляется", callback_data=f"status_{order.id}_delivering")],
-        [InlineKeyboardButton("Завершен", callback_data=f"status_{order.id}_completed")],
-        [InlineKeyboardButton("Отменен", callback_data=f"status_{order.id}_canceled")]
-    ]
-    await query.edit_message_text(
-        text=f"Выберите новый статус для заказа {order.id}:",
-        reply_markup=InlineKeyboardMarkup(keyboard)
-    )
-
-# Обработчик для установки нового статуса заказа
-async def set_order_status(update: Update, context: CallbackContext) -> None:
-    query = update.callback_query
-    await query.answer()
-    logger.info(f"Пользователь {query.message.chat_id} пытается установить новый статус.")
-
-    if str(query.message.chat_id) != str(ADMIN_TELEGRAM_CHAT_ID):
-        await context.bot.send_message(chat_id=query.message.chat_id, text="У вас нет прав для использования этой команды.")
-        return
-
-    data = query.data.split("_")
-    order_id = int(data[1])
-    new_status_key = data[2]
-
-    status_mapping = {
-        "processing": "pending",
-        "delivering": "shipped",
-        "completed": "delivered",
-        "canceled": "canceled"
-    }
-
-    if new_status_key not in status_mapping:
-        await context.bot.send_message(chat_id=query.message.chat_id, text="Некорректный статус.")
-        return
-
-    order = await sync_to_async(Order.objects.get)(id=order_id)
-    order.status = status_mapping[new_status_key]
-    await sync_to_async(order.save)()
-    logger.info(f"Заказ {order.id} изменен на статус {order.get_status_display()}")
-    await query.edit_message_text(text=f"Статус заказа {order.id} изменен на '{order.get_status_display()}'.")
-
-# Реализация функции отправки каталога
-async def send_catalog(update: Update, context: CallbackContext, from_callback=False) -> None:
-    chat_id = update.callback_query.message.chat_id if from_callback else update.message.chat_id
-
-    products = await sync_to_async(list)(Product.objects.all())
-    if products:
-        for product in products:
-            product_description = f"{product.name}\n{product.description}\nЦена: {product.price} руб."
-
-            if product.image:
-                try:
-                    product_image_url = f"{settings.DOMAIN_NAME}{product.image.url}"
-                    await context.bot.send_photo(
-                        chat_id=chat_id,
-                        photo=product_image_url,
-                        caption=product_description
-                    )
-                except Exception as e:
-                    logger.error(f"Ошибка при отправке изображения через URL: {e}")
-                    try:
-                        await context.bot.send_photo(
-                            chat_id=chat_id,
-                            photo=open(product.image.path, 'rb'),
-                            caption=product_description
-                        )
-                    except Exception as local_error:
-                        logger.error(f"Ошибка при отправке локального изображения: {local_error}")
-                        await context.bot.send_message(chat_id=chat_id, text=product_description)
-            else:
-                await context.bot.send_message(chat_id=chat_id, text=product_description)
-    else:
-        await context.bot.send_message(chat_id=chat_id, text="К сожалению, в данный момент товары недоступны.")
-
-# Реализация функции проверки статуса заказа
-async def check_status(update: Update, context: CallbackContext, from_callback=False) -> None:
-    chat_id = update.callback_query.message.chat_id if from_callback else update.message.chat_id
-    user = await sync_to_async(lambda: User.objects.filter(username=update.effective_user.username).first())()
-    if user:
-        orders = await sync_to_async(lambda: list(Order.objects.filter(user=user)))()
-        if orders:
-            response = "Ваши заказы:\n"
-            for order in orders:
-                response += f"Заказ #{order.id}: Статус - {order.get_status_display()}\n"
-            await context.bot.send_message(chat_id=chat_id, text=response)
-        else:
-            await context.bot.send_message(chat_id=chat_id, text="У вас нет активных заказов.")
-    else:
-        await context.bot.send_message(chat_id=chat_id, text="Пользователь не найден в системе. Пожалуйста, зарегистрируйтесь.")
-
-# Реализация функции помощи
-async def help_command(update: Update, context: CallbackContext, from_callback=False) -> None:
-    chat_id = update.callback_query.message.chat_id if from_callback else update.message.chat_id
-
-    await context.bot.send_message(
-        chat_id=chat_id,
-        text=(
-            "/start - Начать работу с ботом\n"
-            "/catalog - Просмотреть каталог цветов\n"
-            "/status - Проверить статус заказов\n"
-            "/register - Зарегистрироваться в системе\n"
-            "Чтобы заказать, нажмите 'Заказать' и следуйте инструкциям."
-        )
-    )
-
-# Реализация функции регистрации пользователя
-async def register_user(update: Update, context: CallbackContext, from_callback=False) -> None:
-    telegram_user = update.callback_query.from_user if from_callback else update.message.from_user
-    chat_id = update.callback_query.message.chat_id if from_callback else update.message.chat_id
-
-    user, created = await sync_to_async(User.objects.get_or_create)(username=telegram_user.username)
-
-    if created:
-        await context.bot.send_message(chat_id=chat_id,
-                                       text="Вы успешно зарегистрированы. Теперь вы можете делать заказы.")
-    else:
-        await context.bot.send_message(chat_id=chat_id,
-                                       text="У вас уже есть учетная запись. Вы можете продолжить делать заказы.")
-
-def setup_bot():
-    application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+def setup_bot(button_handler=None):
     conv_handler = ConversationHandler(
         entry_points=[CallbackQueryHandler(start_order, pattern='^order$')],
         states={
@@ -401,8 +221,9 @@ def setup_bot():
             ]
         },
         fallbacks=[CallbackQueryHandler(cancel_order, pattern='^cancel_order$')],
-        per_chat=True  # Изменено с per_message на per_chat
+        per_chat=True
     )
+
     application.add_handler(CommandHandler("start", start))
     application.add_handler(conv_handler)
     application.add_handler(CallbackQueryHandler(button_handler))
