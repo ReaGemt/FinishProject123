@@ -25,6 +25,10 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Sum, Count, F
 from django.utils import timezone
 from datetime import datetime
+from django.contrib import messages
+from .forms import UserProfileForm
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -247,8 +251,7 @@ def register(request):
         form = UserRegisterForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)
-            messages.success(request, 'Регистрация прошла успешно. Добро пожаловать!')
+            messages.success(request, "Регистрация прошла успешно. Добро пожаловать!")
             return redirect('profile')
     else:
         form = UserRegisterForm()
@@ -374,13 +377,13 @@ def send_message(request):
 @login_required
 def edit_profile(request):
     if request.method == 'POST':
-        form = UserUpdateForm(request.POST, instance=request.user)
+        form = UserProfileForm(request.POST, user=request.user, instance=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, 'Ваш профиль был успешно обновлен.')
             return redirect('profile')
     else:
-        form = UserUpdateForm(instance=request.user)
+        form = UserProfileForm(user=request.user, instance=request.user)
     return render(request, 'edit_user.html', {'form': form, 'user': request.user})
 
 def change_currency(request):
