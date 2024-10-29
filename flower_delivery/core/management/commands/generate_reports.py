@@ -3,8 +3,7 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from core.models import Order, Report
-from django.contrib.auth.models import User
-from django.db.models import Sum, Count, F
+from django.db.models import Sum, F
 
 class Command(BaseCommand):
     help = 'Генерирует ежедневный отчет по продажам'

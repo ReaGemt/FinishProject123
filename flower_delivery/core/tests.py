@@ -4,11 +4,8 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from django.test import TestCase
-from django.contrib.auth.models import User
 from django.urls import reverse
 from .models import Product, Order, OrderItem
-
-
 
 class OrderTest(TestCase):
     @classmethod

@@ -1,4 +1,3 @@
-<!-- templates/profile.html -->
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
@@ -8,6 +7,11 @@
             <h2 class="mb-4 text-center">Личный кабинет</h2>
             <p><strong>Имя пользователя:</strong> {{ user.username }}</p>
             <p><strong>Электронная почта:</strong> {{ user.email }}</p>
+
+            <p><strong>Телефон:</strong> {{ user.profile.phone|default:"Не указан" }}</p>
+            <p><strong>ФИО:</strong> {{ user.profile.full_name|default:"Не указано" }}</p>
+            <p><strong>Адрес доставки:</strong> {{ user.profile.delivery_address|default:"Не указан" }}</p>
+
             <div class="mb-3">
                 <a href="{% url 'password_change' %}" class="btn btn-outline-secondary w-100 mb-2">Изменить пароль</a>
                 <a href="{% url 'edit_profile' %}" class="btn btn-outline-secondary w-100">Редактировать профиль</a>
@@ -16,12 +20,11 @@
     </div>
 
     {% if messages %}
-        <div class="alert alert-info mt-4">
-            <ul>
-                {% for message in messages %}
-                    <li>{{ message }}</li>
-                {% endfor %}
-            </ul>
+        <div class="alert alert-success mt-4 text-center" role="alert">
+            <h4 class="alert-heading">Добро пожаловать, {{ user.username }}!</h4>
+            <p>Вы успешно зарегистрировались и теперь можете пользоваться всеми функциями нашего сервиса.</p>
+            <hr>
+            <p class="mb-0">Если у вас возникнут вопросы, обращайтесь к нам через раздел "Контакты".</p>
         </div>
     {% endif %}
 

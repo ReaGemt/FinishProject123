@@ -1,10 +1,7 @@
 # core/admin.py
-
 from django.contrib import admin
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
-from django.template.response import TemplateResponse
-from django.urls import path
 from .models import Product, Order, Review, Report, OrderItem
 from .utils import generate_sales_report
 

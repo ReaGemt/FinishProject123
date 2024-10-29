@@ -1,4 +1,4 @@
-<!-- flower_delivery\templates\registration\register.html -->
+<!-- flower_delivery/templates/registration/register.html -->
 {% extends 'base.html' %}
 {% block title %}Регистрация{% endblock %}
 {% load form_filters %}
@@ -35,10 +35,16 @@
                             <span class="input-group-text"><i class="bi bi-person"></i></span>
                         {% elif field.name == "email" %}
                             <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                        {% elif field.name == "phone" %}
+                            <span class="input-group-text"><i class="bi bi-phone"></i></span>
+                        {% elif field.name == "full_name" %}
+                            <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                        {% elif field.name == "delivery_address" %}
+                            <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
                         {% elif field.name == "password1" or field.name == "password2" %}
                             <span class="input-group-text"><i class="bi bi-lock"></i></span>
                         {% endif %}
-                        {{ field|add_class:"form-control" }} required
+                        {{ field|add_class:"form-control" }}
                     </div>
                     {% if field.help_text %}
                         <small id="{{ field.id_for_label }}-help" class="form-text text-muted">{{ field.help_text }}</small>
