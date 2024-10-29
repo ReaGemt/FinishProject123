@@ -7,17 +7,36 @@ from dadata import Dadata
 from django.conf import settings
 import logging
 from django.utils.translation import gettext_lazy as _
-
-
+from django.core.validators import RegexValidator
+from .models import UserProfile
 
 logger = logging.getLogger(__name__)
 
 class UserRegisterForm(UserCreationForm):
-    email = forms.EmailField(required=True)
+    email = forms.EmailField(required=True, label="Электронная почта")
+    phone = forms.CharField(
+        max_length=15,
+        required=True,
+        label="Телефон",
+        validators=[RegexValidator(regex=r'^\+?1?\d{9,15}$', message="Введите корректный номер телефона.")],
+        widget=forms.TextInput(attrs={'placeholder': 'Введите номер телефона'}),
+    )
+    full_name = forms.CharField(
+        max_length=255,
+        required=True,
+        label="ФИО",
+        widget=forms.TextInput(attrs={'placeholder': 'Введите ваше полное имя'}),
+    )
+    delivery_address = forms.CharField(
+        max_length=255,
+        required=True,
+        label="Адрес доставки",
+        widget=forms.TextInput(attrs={'placeholder': 'Введите адрес доставки'}),
+    )
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password1', 'password2']
+        fields = ['username', 'email', 'phone', 'full_name', 'delivery_address', 'password1', 'password2']
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
@@ -25,16 +44,43 @@ class UserRegisterForm(UserCreationForm):
             raise forms.ValidationError("Пользователь с таким email уже зарегистрирован.")
         return email
 
+    def save(self, commit=True):
+        user = super().save(commit=commit)
+        if commit:
+            # Создаем или обновляем профиль пользователя
+            profile, created = UserProfile.objects.get_or_create(user=user)
+            profile.phone = self.cleaned_data['phone']
+            profile.full_name = self.cleaned_data['full_name']
+            profile.delivery_address = self.cleaned_data['delivery_address']
+            profile.save()
+        return user
+
 class UserUpdateForm(forms.ModelForm):
+    phone = forms.CharField(max_length=15, required=False, label="Телефон")
+    full_name = forms.CharField(max_length=255, required=False, label="ФИО")
+    delivery_address = forms.CharField(max_length=255, required=False, label="Адрес доставки")
+
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name']
+        fields = ['username', 'email', 'first_name', 'last_name', 'phone', 'full_name', 'delivery_address']
 
-    def clean_email(self):
-        email = self.cleaned_data.get('email')
-        if User.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
-            raise forms.ValidationError("Пользователь с таким email уже зарегистрирован.")
-        return email
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and hasattr(self.instance, 'profile'):
+            self.fields['phone'].initial = self.instance.profile.phone
+            self.fields['full_name'].initial = self.instance.profile.full_name
+            self.fields['delivery_address'].initial = self.instance.profile.delivery_address
+
+    def save(self, commit=True):
+        user = super().save(commit=commit)
+        profile, created = UserProfile.objects.get_or_create(user=user)
+        profile.phone = self.cleaned_data['phone']
+        profile.full_name = self.cleaned_data['full_name']
+        profile.delivery_address = self.cleaned_data['delivery_address']
+        if commit:
+            profile.save()
+        return user
+
 
 class ProductForm(forms.ModelForm):
     class Meta:

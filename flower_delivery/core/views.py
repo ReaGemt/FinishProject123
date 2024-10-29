@@ -1,58 +1,28 @@
 # core\views.py
-import pytz
 import logging
 import json
 import requests
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.paginator import Paginator
-from .models import Product, Cart, CartItem, Order, OrderItem, Review
+from .models import Product, Cart, CartItem, Order, OrderItem, Review, Report
 from .forms import UserRegisterForm, UserUpdateForm, ProductForm
 from django.contrib.auth import login
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
-from datetime import datetime
 from .forms import StockUpdateForm
 from .utils import generate_sales_report
-from django.contrib.auth.decorators import user_passes_test
-import plotly.express as px
-import plotly.io as pio
-from .utils import generate_sales_report_by_period
 import csv
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
-from django.http import HttpResponse
-import matplotlib.pyplot as plt
-import os
-from io import BytesIO
-import tempfile
-from .forms import SalesReportForm
 from datetime import timedelta
-from django.utils.dateparse import parse_date
-from django.shortcuts import render
-import plotly.express as px
-import pandas as pd
-from .utils import generate_sales_report_by_period, generate_sales_report_by_custom_period
 from django.http import HttpResponse
 from reportlab.pdfgen import canvas
 from io import BytesIO
-from .utils import generate_sales_report_by_custom_period
-from datetime import datetime
-import plotly.io as pio
-from django.shortcuts import render
-from django.contrib.admin.views.decorators import staff_member_required
-from core.models import Report
-from django.shortcuts import render
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Sum, Count, F
-from django.utils import timezone
-from django.db.models.functions import TruncDate
 from django.utils import timezone
 from datetime import datetime
 
@@ -60,20 +30,16 @@ logger = logging.getLogger(__name__)
 
 # Constants for working hours
 WORKING_HOURS_START = 9  # Начало рабочего времени (9 утра)
-WORKING_HOURS_END = 18  # Конец рабочего времени (6 вечера)
-
+WORKING_HOURS_END = 20  # Конец рабочего времени (6 вечера)
 
 date_str = '2024-10-27'
 naive_datetime = datetime.strptime(date_str, '%Y-%m-%d')
 aware_datetime = timezone.make_aware(naive_datetime)
 
-
-
-# Utility functions
 def is_within_working_hours():
     """Проверяет, находится ли текущее время в пределах рабочего времени."""
-    current_hour = datetime.now(pytz.timezone(settings.TIME_ZONE)).hour
-    return WORKING_HOURS_START <= current_hour < WORKING_HOURS_END
+    now = timezone.localtime()  # Получаем текущее время в локальном часовом поясе
+    return settings.WORKING_HOURS_START <= now.hour < settings.WORKING_HOURS_END
 
 def is_manager(user):
     """Проверяет, является ли пользователь менеджером или администратором."""
@@ -154,6 +120,10 @@ def add_to_cart(request, product_id):
 
 
 def view_cart(request):
+    # Проверка на рабочее время
+    if not is_within_working_hours():
+        messages.warning(request, "Заказы принимаются только в рабочее время (с 9:00 до 18:00).")
+
     cart = get_or_create_cart(request)
     cart_items = cart.items.all()
     return render(request, 'cart.html', {'cart': cart, 'cart_items': cart_items})

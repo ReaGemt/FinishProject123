@@ -1,13 +1,9 @@
 # core\utils.py
-from django.utils.translation import gettext_lazy as _
-import asyncio
 import logging
 from telegram import Bot
 from django.conf import settings
 from asgiref.sync import async_to_sync
-from django.db.models import Sum, Count
 from .models import Order, OrderItem, Product
-from django.utils import timezone
 from datetime import datetime, timedelta
 from django.utils import timezone
 
