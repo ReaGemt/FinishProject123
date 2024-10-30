@@ -1,6 +1,7 @@
 # core/forms.py
 from django import forms
 from django.contrib.auth.models import User
+from .models import UserProfile
 from django.contrib.auth.forms import UserCreationForm
 from .models import Product
 from dadata import Dadata
@@ -8,9 +9,10 @@ from django.conf import settings
 import logging
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
-from .models import UserProfile
 
 logger = logging.getLogger(__name__)
+
+# core/forms.py
 
 class UserRegisterForm(UserCreationForm):
     email = forms.EmailField(required=True, label="Электронная почта")
@@ -47,12 +49,42 @@ class UserRegisterForm(UserCreationForm):
     def save(self, commit=True):
         user = super().save(commit=commit)
         if commit:
-            # Создаем или обновляем профиль пользователя
+            # Обновление или создание профиля пользователя
             profile, created = UserProfile.objects.get_or_create(user=user)
             profile.phone = self.cleaned_data['phone']
             profile.full_name = self.cleaned_data['full_name']
             profile.delivery_address = self.cleaned_data['delivery_address']
             profile.save()
+        return user
+
+class UserProfileForm(forms.ModelForm):
+    phone = forms.CharField(max_length=15, required=False, label="Телефон")
+    full_name = forms.CharField(max_length=255, required=False, label="ФИО")
+    delivery_address = forms.CharField(max_length=255, required=False, label="Адрес доставки")
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name', 'phone', 'full_name', 'delivery_address']
+
+    def __init__(self, *args, **kwargs):
+        # Получаем пользователя из формы
+        user = kwargs.pop('user', None)
+        super(UserProfileForm, self).__init__(*args, **kwargs)
+
+        # Заполняем начальные значения для полей профиля
+        if user:
+            self.fields['phone'].initial = user.profile.phone
+            self.fields['full_name'].initial = user.profile.full_name
+            self.fields['delivery_address'].initial = user.profile.delivery_address
+
+    def save(self, commit=True):
+        user = super().save(commit=commit)
+        # Сохраняем данные в профиль пользователя
+        user.profile.phone = self.cleaned_data['phone']
+        user.profile.full_name = self.cleaned_data['full_name']
+        user.profile.delivery_address = self.cleaned_data['delivery_address']
+        if commit:
+            user.profile.save()
         return user
 
 class UserUpdateForm(forms.ModelForm):

@@ -42,12 +42,9 @@ def send_order_status_update(sender, instance, **kwargs):
 # Создание профиля пользователя при создании нового пользователя
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
-    if created and not hasattr(instance, 'profile'):
+    if created:
         UserProfile.objects.create(user=instance)
 
-# Сохранение профиля пользователя
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
-    profile = getattr(instance, 'profile', None)
-    if profile:
-        profile.save()
+    instance.profile.save()
