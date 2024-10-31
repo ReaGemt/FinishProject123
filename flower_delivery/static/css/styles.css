@@ -200,8 +200,67 @@ body.dark-theme .alert {
 button {
     z-index: 1000; /* Сделайте кнопку выше других элементов */
 }
-.flower-icon {
-    width: 20px !important;
-    height: 20px !important;
-    margin-right: 2px;
-}
+<style>
+    .flower-icon {
+        width: 20px;
+        height: 20px;
+        margin-right: 2px;
+        cursor: pointer; /* Указатель курсора при наведении */
+        transition: transform 0.2s; /* Плавный эффект при наведении */
+    }
+
+    .flower-icon:hover {
+        transform: scale(1.2); /* Увеличение иконки при наведении */
+    }
+
+    .flower-icon.filled {
+        /* Можно добавить дополнительные стили для заполненных цветочков */
+    }
+
+    /* Модальное окно */
+    .modal {
+        display: none; /* Изначально скрыто */
+        justify-content: center;
+        align-items: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .modal.show {
+        display: flex;
+        opacity: 1;
+    }
+
+    .modal-content {
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        max-width: 300px;
+    }
+
+    .modal-content .btn {
+        width: 45%;
+    }
+
+    .sticker {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background-color: #ffc107;
+        color: white;
+        padding: 5px 10px;
+        font-size: 12px;
+        border-radius: 5px;
+        text-transform: uppercase;
+        font-weight: bold;
+    }
+</style>
+

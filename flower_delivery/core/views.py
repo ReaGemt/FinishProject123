@@ -1,6 +1,5 @@
 # core\views.py
 import logging
-import json
 import requests
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.paginator import Paginator
@@ -25,10 +24,9 @@ from django.db.models import Sum, Count, F
 from django.utils import timezone
 from datetime import datetime
 from .forms import UserProfileForm
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.csrf import csrf_exempt
 import json
-from .models import Product
+from django.views.decorators.csrf import csrf_exempt
+
 
 logger = logging.getLogger(__name__)
 
@@ -660,19 +658,20 @@ def popular_products_report(request):
     }
     return render(request, 'reports/popular_products_report.html', context)
 
+def catalog(request):
+    products = Product.objects.all()
+    return render(request, 'catalog.html', {'products': products})
+
 @csrf_exempt
-@login_required
 def rate_product(request, product_id):
-    if request.method == "POST":
-        data = json.loads(request.body)
-        rating = data.get("rating")
-
+    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         try:
-            product = Product.objects.get(id=product_id)
-            product.rating = rating  # Здесь можно обновить поле рейтинга, если оно существует
+            data = json.loads(request.body)
+            rating = int(data.get('rating', 0))
+            product = get_object_or_404(Product, id=product_id)
+            product.current_rating = rating  # Предполагается, что у вас есть такое поле
             product.save()
-            return JsonResponse({"success": True})
-        except Product.DoesNotExist:
-            return JsonResponse({"success": False, "error": "Продукт не найден"}, status=404)
-
-    return JsonResponse({"success": False, "error": "Неверный метод запроса"}, status=400)
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request'})

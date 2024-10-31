@@ -29,9 +29,13 @@
                                 <p><strong>Цена: {{ product.price }} руб.</strong></p>
                                 <p>
                                     Рейтинг:
-                                    <span class="rating" data-product-id="{{ product.id }}">
+                                    <span class="rating" data-product-id="{{ product.id }}" data-current-rating="{{ product.current_rating|default:0 }}">
                                         {% for i in "12345" %}
-                                            <img src="{% static 'images/flower-empty.png' %}" alt="Цветочек" data-value="{{ forloop.counter }}" class="flower-icon">
+                                            <img src="{% static 'images/flower-filled.png' %}"
+                                                 alt="Цветочек"
+                                                 data-value="{{ forloop.counter }}"
+                                                 class="flower-icon"
+                                                 id="product-{{ product.id }}-flower-{{ forloop.counter }}">
                                         {% endfor %}
                                     </span>
                                 </p>
@@ -52,7 +56,7 @@
 </div>
 
 <!-- Модальное окно -->
-<div id="cart-modal" class="modal" style="display: none;">
+<div id="cart-modal" class="modal">
     <div class="modal-content">
         <p>Товар добавлен в корзину. Что хотите сделать?</p>
         <div class="d-flex justify-content-between">
@@ -63,8 +67,9 @@
 </div>
 
 <style>
+    /* Стили для модального окна */
     .modal {
-        display: flex;
+        display: none; /* Изначально скрыто */
         justify-content: center;
         align-items: center;
         position: fixed;
@@ -79,6 +84,7 @@
     }
 
     .modal.show {
+        display: flex;
         opacity: 1;
     }
 
@@ -94,6 +100,7 @@
         width: 45%;
     }
 
+    /* Стили для стикера популярности */
     .sticker {
         position: absolute;
         top: 10px;
@@ -107,123 +114,145 @@
         font-weight: bold;
     }
 
+    /* Стили для иконок цветочков */
     .flower-icon {
         width: 20px !important;
         height: 20px !important;
         margin-right: 2px;
+        cursor: pointer;
+        display: inline-block;
+    }
+
+    .flower-icon.filled {
+        /* Дополнительные стили для заполненных цветочков, если необходимо */
     }
 </style>
 
+<!-- Скрипт для добавления в корзину и управления модальным окном -->
 <script>
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    document.addEventListener("DOMContentLoaded", function () {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-    document.querySelectorAll('.add-to-cart-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const productId = this.getAttribute('data-product-id');
-            const quantity = 1;
+        document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const productId = this.getAttribute('data-product-id');
+                const quantity = 1;
 
-            button.disabled = true;
+                button.disabled = true;
 
-            fetch(`/add_to_cart/${productId}/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrfToken,
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'x-requested-with': 'XMLHttpRequest',
-                },
-                body: `quantity=${quantity}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message) {
-                    showCartModal();
-                } else {
-                    alert('Ошибка добавления в корзину. Попробуйте позже.');
-                }
-            })
-            .catch(error => {
-                console.error('Ошибка:', error);
-                alert('Ошибка сети. Попробуйте снова.');
-            })
-            .finally(() => {
-                button.disabled = false;
+                fetch(`/add_to_cart/${productId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'x-requested-with': 'XMLHttpRequest',
+                    },
+                    body: `quantity=${quantity}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        showCartModal();
+                    } else {
+                        alert('Ошибка добавления в корзину. Попробуйте позже.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка:', error);
+                    alert('Ошибка сети. Попробуйте снова.');
+                })
+                .finally(() => {
+                    button.disabled = false;
+                });
             });
         });
-    });
 
-    function showCartModal() {
-        const modal = document.getElementById('cart-modal');
-        modal.classList.add('show');
-
-        document.getElementById('continue-shopping').addEventListener('click', function() {
-            modal.classList.remove('show');
-        });
-    }
-
-    // Закрытие модального окна при клике вне его
-    window.addEventListener('click', function(event) {
-        const modal = document.getElementById('cart-modal');
-        if (event.target === modal) {
-            modal.classList.remove('show');
-        }
-    });
-
-    // Закрытие модального окна при нажатии на клавишу Esc
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape') {
+        function showCartModal() {
             const modal = document.getElementById('cart-modal');
-            modal.classList.remove('show');
+            modal.classList.add('show');
+
+            document.getElementById('continue-shopping').addEventListener('click', function () {
+                modal.classList.remove('show');
+            });
         }
+
+        // Закрытие модального окна при клике вне его
+        window.addEventListener('click', function (event) {
+            const modal = document.getElementById('cart-modal');
+            if (event.target === modal) {
+                modal.classList.remove('show');
+            }
+        });
+
+        // Закрытие модального окна при нажатии на клавишу Esc
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                const modal = document.getElementById('cart-modal');
+                modal.classList.remove('show');
+            }
+        });
     });
 </script>
+
+<!-- Скрипт для управления рейтингом -->
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const ratingContainers = document.querySelectorAll(".rating");
 
         ratingContainers.forEach(container => {
+            const productId = container.getAttribute("data-product-id");
+            const currentRating = parseInt(container.getAttribute("data-current-rating")) || 0;
             const flowers = container.querySelectorAll(".flower-icon");
-            let selectedRating = 0;
+            let selectedRating = currentRating;
+
+            // Инициализация текущего рейтинга
+            highlightFlowers(selectedRating);
+
+            // Функция для подсвечивания цветков до указанного рейтинга
+            function highlightFlowers(rating) {
+                flowers.forEach(flower => {
+                    const flowerRating = parseInt(flower.getAttribute("data-value"));
+                    if (flowerRating <= rating) {
+                        flower.src = "{% static 'images/flower-filled.png' %}";
+                        flower.classList.add('filled');
+                    } else {
+                        flower.src = "{% static 'images/flower-empty.png' %}";
+                        flower.classList.remove('filled');
+                    }
+                });
+            }
 
             flowers.forEach(flower => {
                 // Наведение для временного рейтинга
                 flower.addEventListener("mouseover", () => {
-                    const rating = flower.getAttribute("data-value");
-                    highlightFlowers(flowers, rating);
+                    const rating = parseInt(flower.getAttribute("data-value"));
+                    highlightFlowers(rating);
                 });
 
                 // Убираем временный рейтинг при выходе курсора
                 flower.addEventListener("mouseleave", () => {
-                    highlightFlowers(flowers, selectedRating);
+                    highlightFlowers(selectedRating);
                 });
 
                 // Клик для выбора постоянного рейтинга
                 flower.addEventListener("click", () => {
-                    selectedRating = flower.getAttribute("data-value");
-                    highlightFlowers(flowers, selectedRating);
+                    selectedRating = parseInt(flower.getAttribute("data-value"));
+                    highlightFlowers(selectedRating);
 
                     // Отправка рейтинга на сервер
-                    const productId = container.getAttribute("data-product-id");
                     saveRating(productId, selectedRating);
                 });
             });
         });
 
-        // Функция подсвечивания цветков до указанного рейтинга
-        function highlightFlowers(flowers, rating) {
-            flowers.forEach(flower => {
-                const flowerRating = flower.getAttribute("data-value");
-                flower.src = flowerRating <= rating
-                    ? "{% static 'images/flower-filled.png' %}"
-                    : "{% static 'images/flower-empty.png' %}";
-            });
-        }
-
         // Функция для сохранения рейтинга на сервере
         function saveRating(productId, rating) {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
             fetch(`/rate_product/${productId}/`, {
                 method: "POST",
                 headers: {
-                    "X-CSRFToken": '{{ csrf_token }}',
+                    "X-CSRFToken": csrfToken,
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({ rating: rating })
