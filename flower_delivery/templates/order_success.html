@@ -6,6 +6,7 @@
     <img src="{% static 'images/success-icon.png' %}" alt="Иконка успешного заказа" width="400" class="mb-4">
     <h2 class="mb-4 text-success">Заказ №{{ order.id }} успешно оформлен!</h2>
     <p class="lead">Ваш заказ был успешно принят. Спасибо, что выбрали нас!</p>
+    <p class="text-center">Номер вашего заказа: <strong>{{ order.id }}</strong></p>
     <hr class="my-4">
     <div class="d-flex justify-content-center flex-wrap">
         <a href="{% url 'order_detail' order.id %}" class="btn btn-outline-secondary btn-lg me-2 mb-2">
@@ -20,9 +21,3 @@
     </div>
 </div>
 {% endblock %}
-
-
-
-
-
-

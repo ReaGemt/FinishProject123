@@ -194,7 +194,7 @@ class UserProfile(models.Model):
     phone = models.CharField(max_length=15, blank=True, null=True)
     full_name = models.CharField(max_length=255, blank=True, null=True)
     delivery_address = models.CharField(max_length=255, blank=True, null=True)
-    telegram_id = models.CharField(max_length=255, blank=True, null=True)
+    telegram_chat_id = models.CharField(max_length=255, blank=True, null=True)  # Добавьте это поле
 
     def __str__(self):
         return self.user.username

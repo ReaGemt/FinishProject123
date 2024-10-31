@@ -75,4 +75,8 @@ urlpatterns = [
     path('reports/sales/download/csv/', views.download_sales_report_csv, name='download_sales_report_csv'),
     path('reports/sales/download/pdf/', views.download_sales_report_pdf, name='download_sales_report_pdf'),
     path('download_sales_report_pdf/', views.download_sales_report_pdf, name='download_sales_report_pdf'),
+    path('order/<int:order_id>/', views.order_detail, name='order_detail'),
+    path('order/history/', views.order_history, name='order_history'),
+    path('order/success/<int:order_id>/', views.order_success, name='order_success'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+

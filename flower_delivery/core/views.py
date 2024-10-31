@@ -6,7 +6,6 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.paginator import Paginator
 from .models import Product, Cart, CartItem, Order, OrderItem, Review, Report
 from .forms import UserRegisterForm, UserUpdateForm, ProductForm
-from django.contrib.auth import login
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect, JsonResponse
@@ -27,7 +26,7 @@ from django.utils import timezone
 from datetime import datetime
 from django.contrib import messages
 from .forms import UserProfileForm
-
+from django.contrib.auth.decorators import login_required
 
 
 logger = logging.getLogger(__name__)
@@ -172,6 +171,7 @@ def checkout(request):
         logger.info("Attempt to place an order outside working hours.")
         messages.error(request, 'Заказы принимаются только в рабочее время (с 9:00 до 18:00).')
         return redirect('view_cart')
+
 
     cart = get_or_create_cart(request)
     if not cart.items.exists():
@@ -322,8 +322,9 @@ def edit_user(request, user_id):
 
     return render(request, 'edit_user.html', {'form': form, 'user': user})
 
+@login_required
 def order_success(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
+    order = get_object_or_404(Order, id=order_id, user=request.user)
     return render(request, 'order_success.html', {'order': order})
 
 @user_passes_test(is_manager)
