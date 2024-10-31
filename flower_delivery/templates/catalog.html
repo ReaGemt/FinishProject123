@@ -29,13 +29,12 @@
                                 <p><strong>Цена: {{ product.price }} руб.</strong></p>
                                 <p>
                                     Рейтинг:
-                                    {% for i in "12345" %}
-                                        {% if product.rating >= forloop.counter %}
-                                            <i class="fas fa-star text-warning"></i>
-                                        {% else %}
-                                            <i class="far fa-star text-muted"></i>
-                                        {% endif %}
-                                    {% endfor %}
+                                    <span class="rating" data-product-id="{{ product.id }}">
+                                        {% for i in "12345" %}
+                                            <img src="{% static 'images/flower-empty.png' %}" alt="Цветочек" width="20" height="20"
+                                                 data-value="{{ forloop.counter }}" class="flower-icon">
+                                        {% endfor %}
+                                    </span>
                                 </p>
                             </div>
                             <a href="{% url 'product_detail' product.id %}" class="btn btn-primary w-100 mb-2">Подробнее</a>
@@ -166,4 +165,75 @@
         }
     });
 </script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const ratingContainers = document.querySelectorAll(".rating");
+
+        ratingContainers.forEach(container => {
+            const flowers = container.querySelectorAll(".flower-icon");
+            let selectedRating = 0;
+
+            flowers.forEach(flower => {
+                // Наведение для временного рейтинга
+                flower.addEventListener("mouseover", () => {
+                    const rating = flower.getAttribute("data-value");
+                    highlightFlowers(flowers, rating);
+                });
+
+                // Убираем временный рейтинг при выходе курсора
+                flower.addEventListener("mouseleave", () => {
+                    highlightFlowers(flowers, selectedRating);
+                });
+
+                // Клик для выбора постоянного рейтинга
+                flower.addEventListener("click", () => {
+                    selectedRating = flower.getAttribute("data-value");
+                    highlightFlowers(flowers, selectedRating);
+
+                    // Отправка рейтинга на сервер
+                    const productId = container.getAttribute("data-product-id");
+                    saveRating(productId, selectedRating);
+                });
+            });
+        });
+
+        // Функция подсвечивания цветков до указанного рейтинга
+        function highlightFlowers(flowers, rating) {
+            flowers.forEach(flower => {
+                const flowerRating = flower.getAttribute("data-value");
+                flower.src = flowerRating <= rating
+                    ? "{% static 'images/flower-filled.png' %}"
+                    : "{% static 'images/flower-empty.png' %}";
+            });
+        }
+
+        // Функция для сохранения рейтинга на сервере
+        function saveRating(productId, rating) {
+            fetch(`/rate_product/${productId}/`, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": '{{ csrf_token }}',
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ rating: rating })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log("Рейтинг сохранен!");
+                } else {
+                    console.error("Ошибка сохранения рейтинга.");
+                }
+            })
+            .catch(error => console.error("Ошибка:", error));
+        }
+    });
+</script>
+<style>
+    .flower-icon {
+        width: 20px;
+        height: 20px;
+        margin-right: 2px;
+    }
+</style>
 {% endblock %}

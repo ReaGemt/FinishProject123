@@ -24,10 +24,11 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Sum, Count, F
 from django.utils import timezone
 from datetime import datetime
-from django.contrib import messages
 from .forms import UserProfileForm
 from django.contrib.auth.decorators import login_required
-
+from django.views.decorators.csrf import csrf_exempt
+import json
+from .models import Product
 
 logger = logging.getLogger(__name__)
 
@@ -658,3 +659,20 @@ def popular_products_report(request):
         'end_date': end_date.date(),
     }
     return render(request, 'reports/popular_products_report.html', context)
+
+@csrf_exempt
+@login_required
+def rate_product(request, product_id):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        rating = data.get("rating")
+
+        try:
+            product = Product.objects.get(id=product_id)
+            product.rating = rating  # Здесь можно обновить поле рейтинга, если оно существует
+            product.save()
+            return JsonResponse({"success": True})
+        except Product.DoesNotExist:
+            return JsonResponse({"success": False, "error": "Продукт не найден"}, status=404)
+
+    return JsonResponse({"success": False, "error": "Неверный метод запроса"}, status=400)
