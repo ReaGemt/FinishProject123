@@ -31,8 +31,7 @@
                                     Рейтинг:
                                     <span class="rating" data-product-id="{{ product.id }}">
                                         {% for i in "12345" %}
-                                            <img src="{% static 'images/flower-empty.png' %}" alt="Цветочек" width="20" height="20"
-                                                 data-value="{{ forloop.counter }}" class="flower-icon">
+                                            <img src="{% static 'images/flower-empty.png' %}" alt="Цветочек" data-value="{{ forloop.counter }}" class="flower-icon">
                                         {% endfor %}
                                     </span>
                                 </p>
@@ -75,6 +74,12 @@
         height: 100%;
         background-color: rgba(0, 0, 0, 0.5);
         z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .modal.show {
+        opacity: 1;
     }
 
     .modal-content {
@@ -100,6 +105,12 @@
         border-radius: 5px;
         text-transform: uppercase;
         font-weight: bold;
+    }
+
+    .flower-icon {
+        width: 20px !important;
+        height: 20px !important;
+        margin-right: 2px;
     }
 </style>
 
@@ -142,10 +153,10 @@
 
     function showCartModal() {
         const modal = document.getElementById('cart-modal');
-        modal.style.display = 'flex';
+        modal.classList.add('show');
 
         document.getElementById('continue-shopping').addEventListener('click', function() {
-            modal.style.display = 'none';
+            modal.classList.remove('show');
         });
     }
 
@@ -153,7 +164,7 @@
     window.addEventListener('click', function(event) {
         const modal = document.getElementById('cart-modal');
         if (event.target === modal) {
-            modal.style.display = 'none';
+            modal.classList.remove('show');
         }
     });
 
@@ -161,7 +172,7 @@
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
             const modal = document.getElementById('cart-modal');
-            modal.style.display = 'none';
+            modal.classList.remove('show');
         }
     });
 </script>
@@ -229,11 +240,4 @@
         }
     });
 </script>
-<style>
-    .flower-icon {
-        width: 20px;
-        height: 20px;
-        margin-right: 2px;
-    }
-</style>
 {% endblock %}
