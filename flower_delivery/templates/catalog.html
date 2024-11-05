@@ -29,15 +29,25 @@
                                 <p><strong>Цена: {{ product.price }} руб.</strong></p>
                                 <p>
                                     Рейтинг:
-                                    <span class="rating" data-product-id="{{ product.id }}" data-current-rating="{{ product.current_rating|default:0 }}">
-                                        {% for i in "12345" %}
-                                            <img src="{% static 'images/flower-filled.png' %}"
-                                                 alt="Цветочек"
-                                                 data-value="{{ forloop.counter }}"
-                                                 class="flower-icon"
-                                                 id="product-{{ product.id }}-flower-{{ forloop.counter }}">
-                                        {% endfor %}
-                                    </span>
+                                    {% if user.is_authenticated %}
+                                        <span class="rating" data-product-id="{{ product.id }}" data-current-rating="{{ product.current_rating|default:0|floatformat:1 }}">
+                                            {% for i in "12345" %}
+                                                {% with star_value=forloop.counter %}
+                                                    <img src="{% if star_value <= product.current_rating|default:0 %}
+                                                                 {% static 'images/flower-filled.png' %}
+                                                             {% else %}
+                                                                 {% static 'images/flower-empty.png' %}
+                                                             {% endif %}"
+                                                         alt="Цветочек"
+                                                         data-value="{{ star_value }}"
+                                                         class="flower-icon"
+                                                         id="product-{{ product.id }}-flower-{{ star_value }}">
+                                                {% endwith %}
+                                            {% endfor %}
+                                        </span>
+                                    {% else %}
+                                        Пожалуйста, <a href="{% url 'login' %}?next={{ request.path }}">войдите</a>, чтобы оставить рейтинг.
+                                    {% endif %}
                                 </p>
                             </div>
                             <a href="{% url 'product_detail' product.id %}" class="btn btn-primary w-100 mb-2">Подробнее</a>
@@ -196,77 +206,80 @@
 
 <!-- Скрипт для управления рейтингом -->
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const ratingContainers = document.querySelectorAll(".rating");
+document.addEventListener("DOMContentLoaded", function () {
+    const emptyFlowerSrc = "{% static 'images/flower-empty.png' %}";
+    const filledFlowerSrc = "{% static 'images/flower-filled.png' %}";
 
-        ratingContainers.forEach(container => {
-            const productId = container.getAttribute("data-product-id");
-            const currentRating = parseInt(container.getAttribute("data-current-rating")) || 0;
-            const flowers = container.querySelectorAll(".flower-icon");
-            let selectedRating = currentRating;
+    const ratingContainers = document.querySelectorAll(".rating");
 
-            // Инициализация текущего рейтинга
-            highlightFlowers(selectedRating);
+    ratingContainers.forEach(container => {
+        const productId = container.getAttribute("data-product-id");
+        const currentRating = parseFloat(container.getAttribute("data-current-rating")) || 0;
+        const flowers = container.querySelectorAll(".flower-icon");
+        let selectedRating = currentRating;
 
-            // Функция для подсвечивания цветков до указанного рейтинга
-            function highlightFlowers(rating) {
-                flowers.forEach(flower => {
-                    const flowerRating = parseInt(flower.getAttribute("data-value"));
-                    if (flowerRating <= rating) {
-                        flower.src = "{% static 'images/flower-filled.png' %}";
-                        flower.classList.add('filled');
-                    } else {
-                        flower.src = "{% static 'images/flower-empty.png' %}";
-                        flower.classList.remove('filled');
-                    }
-                });
-            }
+        // Инициализация текущего рейтинга
+        highlightFlowers(selectedRating);
 
+        // Функция для подсвечивания цветков до указанного рейтинга
+        function highlightFlowers(rating) {
             flowers.forEach(flower => {
-                // Наведение для временного рейтинга
-                flower.addEventListener("mouseover", () => {
-                    const rating = parseInt(flower.getAttribute("data-value"));
-                    highlightFlowers(rating);
-                });
+                const flowerRating = parseInt(flower.getAttribute("data-value"));
+                if (flowerRating <= rating) {
+                    flower.src = filledFlowerSrc;
+                    flower.classList.add('filled');
+                } else {
+                    flower.src = emptyFlowerSrc;
+                    flower.classList.remove('filled');
+                }
+            });
+        }
 
-                // Убираем временный рейтинг при выходе курсора
-                flower.addEventListener("mouseleave", () => {
-                    highlightFlowers(selectedRating);
-                });
+        flowers.forEach(flower => {
+            // Наведение для временного рейтинга
+            flower.addEventListener("mouseover", () => {
+                const rating = parseInt(flower.getAttribute("data-value"));
+                highlightFlowers(rating);
+            });
 
-                // Клик для выбора постоянного рейтинга
-                flower.addEventListener("click", () => {
-                    selectedRating = parseInt(flower.getAttribute("data-value"));
-                    highlightFlowers(selectedRating);
+            // Убираем временный рейтинг при выходе курсора
+            flower.addEventListener("mouseleave", () => {
+                highlightFlowers(selectedRating);
+            });
 
-                    // Отправка рейтинга на сервер
-                    saveRating(productId, selectedRating);
-                });
+            // Клик для выбора постоянного рейтинга
+            flower.addEventListener("click", () => {
+                selectedRating = parseInt(flower.getAttribute("data-value"));
+                highlightFlowers(selectedRating);
+
+                // Отправка рейтинга на сервер
+                saveRating(productId, selectedRating);
             });
         });
-
-        // Функция для сохранения рейтинга на сервере
-        function saveRating(productId, rating) {
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
-            fetch(`/rate_product/${productId}/`, {
-                method: "POST",
-                headers: {
-                    "X-CSRFToken": csrfToken,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ rating: rating })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    console.log("Рейтинг сохранен!");
-                } else {
-                    console.error("Ошибка сохранения рейтинга.");
-                }
-            })
-            .catch(error => console.error("Ошибка:", error));
-        }
     });
+
+    // Функция для сохранения рейтинга на сервере
+    function saveRating(productId, rating) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch(`/rate_product/${productId}/`, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": csrfToken,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ rating: rating })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log("Рейтинг сохранен!");
+            } else {
+                console.error("Ошибка сохранения рейтинга:", data.error);
+            }
+        })
+        .catch(error => console.error("Ошибка:", error));
+    }
+});
 </script>
 {% endblock %}

@@ -55,8 +55,7 @@ class ReportAdmin(admin.ModelAdmin):
     change_list_template = "admin/sales_report.html"
     list_display = ('created_at', 'total_sales', 'total_orders', 'total_customers')
     ordering = ('-created_at',)
-    verbose_name = _('Отчёт')
-    verbose_name_plural = _('Отчёты')
+
     def changelist_view(self, request, extra_context=None):
         report = generate_sales_report()
         extra_context = extra_context or {}

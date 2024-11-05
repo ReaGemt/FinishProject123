@@ -8,7 +8,6 @@ from .forms import UserRegisterForm, UserUpdateForm, ProductForm
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect, JsonResponse
-from django.shortcuts import render, redirect, get_object_or_404
 from django.core.mail import send_mail
 from django.conf import settings
 from .forms import StockUpdateForm
@@ -26,7 +25,14 @@ from datetime import datetime
 from .forms import UserProfileForm
 import json
 from django.views.decorators.csrf import csrf_exempt
-
+from django.db.models import Avg
+from django.views.decorators.http import require_POST
+from django.db.utils import IntegrityError
+from django.contrib import messages
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import Product, Review
+from .forms import ReviewForm
 
 logger = logging.getLogger(__name__)
 
@@ -222,24 +228,25 @@ def order_history(request):
 def add_review(request, product_id):
     product = get_object_or_404(Product, id=product_id)
 
+    try:
+        review = Review.objects.get(product=product, user=request.user)
+    except Review.DoesNotExist:
+        review = None
+
     if request.method == 'POST':
-        try:
-            rating = int(request.POST.get('rating'))
-            comment = request.POST.get('comment')
+        form = ReviewForm(request.POST, instance=review)
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.product = product
+            review.user = request.user
+            review.save()
+            messages.success(request, 'Ваш отзыв добавлен.' if review.created_at == review.updated_at else 'Ваш отзыв обновлён.')
+            return redirect('product_detail', product_id=product.id)
+    else:
+        form = ReviewForm(instance=review)
 
-            if rating and comment and 1 <= rating <= 5:
-                Review.objects.create(product=product, user=request.user, rating=rating, comment=comment)
-                return redirect('product_detail', product_id=product.id)
-            else:
-                raise ValueError("Некорректный рейтинг.")
-        except ValueError as e:
-            logger.error(f"Ошибка добавления отзыва: {e}")
-            return render(request, 'add_review.html', {
-                'product': product,
-                'errors': ["Некорректные данные. Пожалуйста, укажите правильный рейтинг (от 1 до 5) и комментарий."]
-            })
+    return render(request, 'add_review.html', {'product': product, 'form': form})
 
-    return render(request, 'add_review.html', {'product': product})
 
 def product_detail(request, product_id):
     product = get_object_or_404(Product, id=product_id)
@@ -659,19 +666,31 @@ def popular_products_report(request):
     return render(request, 'reports/popular_products_report.html', context)
 
 def catalog(request):
-    products = Product.objects.all()
+    products = Product.objects.annotate(current_rating=Avg('reviews__rating'))
     return render(request, 'catalog.html', {'products': products})
 
 @csrf_exempt
+@login_required
 def rate_product(request, product_id):
-    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+    if request.method == 'POST':
         try:
             data = json.loads(request.body)
             rating = int(data.get('rating', 0))
             product = get_object_or_404(Product, id=product_id)
-            product.current_rating = rating  # Предполагается, что у вас есть такое поле
-            product.save()
+            if not (1 <= rating <= 5):
+                return JsonResponse({'success': False, 'error': 'Рейтинг должен быть от 1 до 5'})
+
+            # Создаём или обновляем отзыв
+            review, created = Review.objects.update_or_create(
+                product=product,
+                user=request.user,
+                defaults={'rating': rating}
+            )
+
+            # Метод save в модели Review обновит current_rating продукта
             return JsonResponse({'success': True})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
-    return JsonResponse({'success': False, 'error': 'Invalid request'})
+    else:
+        return JsonResponse({'success': False, 'error': 'Invalid request'})
+

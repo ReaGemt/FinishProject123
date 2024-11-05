@@ -8,6 +8,8 @@ from django.conf import settings
 from django.db.models import Sum, F
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.db.models import Avg
+
 
 # Telegram Bot Integration
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -36,7 +38,8 @@ class Product(models.Model):
     rating = models.DecimalField(max_digits=2, decimal_places=1, default=5.0)
     objects = ProductManager()
     stock = models.PositiveIntegerField(default=0)  # Поле для отслеживания количества на складе
-    current_rating = models.IntegerField(default=0)  # Новое поле для рейтинга
+    current_rating = models.FloatField(default=0)
+
     def __str__(self):
         return self.name
 
@@ -51,6 +54,11 @@ class Product(models.Model):
             raise ValidationError(_('Цена должна быть положительной.'))
         if self.stock < 0:
             raise ValidationError(_('Количество на складе не может быть отрицательным.'))
+
+    def update_current_rating(self):
+        avg_rating = self.reviews.aggregate(avg=Avg('rating'))['avg'] or 0
+        self.current_rating = avg_rating
+        self.save(update_fields=['current_rating'])
 
     class Meta:
         verbose_name = _('Продукт')
@@ -172,22 +180,28 @@ class OrderItem(models.Model):
 
 # Модель отзыва
 class Review(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     rating = models.IntegerField()
-    comment = models.TextField()
+    comment = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Отзыв от {self.user} на {self.product}"
 
     def clean(self):
         if not (1 <= self.rating <= 5):
-            raise ValidationError(_('Рейтинг должен быть от 1 до 5'))
+            raise ValidationError('Рейтинг должен быть от 1 до 5')
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.product.update_current_rating()
+
     class Meta:
+        unique_together = ('product', 'user')
         verbose_name = _('Отзыв')
         verbose_name_plural = _('Отзывы')
-        unique_together = ('product', 'user')
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
@@ -207,4 +221,8 @@ class Report(models.Model):
     total_customers = models.PositiveIntegerField()
 
     def __str__(self):
-        return f"Отчет за {self.created_at.strftime('%Y-%m-%d')}"
+        return f"Отчёт за {self.created_at.strftime('%Y-%m-%d')}"
+
+    class Meta:
+        verbose_name = _('Отчёт')
+        verbose_name_plural = _('Отчёты')

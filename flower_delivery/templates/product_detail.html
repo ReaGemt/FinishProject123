@@ -37,17 +37,21 @@
 <hr class="my-4">
 
 <h3><i class="fas fa-comments"></i> Отзывы</h3>
-{% if product.review_set.exists %}
+{% if product.reviews.exists %}
     <ul class="list-group mb-4">
-        {% for review in product.review_set.all %}
+        {% for review in product.reviews.all %}
         <li class="list-group-item">
             <p><strong><i class="fas fa-user"></i> {{ review.user.username }}</strong> - Рейтинг:
                 {% for i in "12345" %}
-                    {% if review.rating >= forloop.counter %}
-                        <i class="fas fa-star text-warning"></i>
-                    {% else %}
-                        <i class="far fa-star text-muted"></i>
-                    {% endif %}
+                    {% with star_value=forloop.counter %}
+                        <img src="{% if star_value <= review.rating %}
+                                     {% static 'images/flower-filled.png' %}
+                                 {% else %}
+                                     {% static 'images/flower-empty.png' %}
+                                 {% endif %}"
+                             alt="Цветочек"
+                             class="flower-icon">
+                    {% endwith %}
                 {% endfor %}
             </p>
             <p>{{ review.comment }}</p>
@@ -62,6 +66,16 @@
 <a href="{% url 'add_review' product.id %}" class="btn btn-primary mt-4">
     <i class="fas fa-plus"></i> Добавить отзыв
 </a>
+
+<!-- Стили для иконок цветочков -->
+<style>
+    .flower-icon {
+        width: 20px;
+        height: 20px;
+        margin-right: 2px;
+        display: inline-block;
+    }
+</style>
 
 <script>
     function updateTotal(price) {
@@ -141,5 +155,3 @@
     }
 </style>
 {% endblock %}
-
-

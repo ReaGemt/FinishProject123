@@ -1,18 +1,16 @@
 # core/forms.py
+
 from django import forms
 from django.contrib.auth.models import User
-from .models import UserProfile
+from .models import UserProfile, Product, Review
 from django.contrib.auth.forms import UserCreationForm
-from .models import Product
 from dadata import Dadata
 from django.conf import settings
 import logging
 from django.utils.translation import gettext_lazy as _
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, MinValueValidator, MaxValueValidator
 
 logger = logging.getLogger(__name__)
-
-# core/forms.py
 
 class UserRegisterForm(UserCreationForm):
     email = forms.EmailField(required=True, label="Электронная почта")
@@ -21,24 +19,27 @@ class UserRegisterForm(UserCreationForm):
         required=True,
         label="Телефон",
         validators=[RegexValidator(regex=r'^\+?1?\d{9,15}$', message="Введите корректный номер телефона.")],
-        widget=forms.TextInput(attrs={'placeholder': 'Введите номер телефона'}),
+        widget=forms.TextInput(attrs={'placeholder': 'Введите номер телефона', 'class': 'form-control'}),
     )
     full_name = forms.CharField(
         max_length=255,
         required=True,
         label="ФИО",
-        widget=forms.TextInput(attrs={'placeholder': 'Введите ваше полное имя'}),
+        widget=forms.TextInput(attrs={'placeholder': 'Введите ваше полное имя', 'class': 'form-control'}),
     )
     delivery_address = forms.CharField(
         max_length=255,
         required=True,
         label="Адрес доставки",
-        widget=forms.TextInput(attrs={'placeholder': 'Введите адрес доставки'}),
+        widget=forms.TextInput(attrs={'placeholder': 'Введите адрес доставки', 'class': 'form-control'}),
     )
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'phone', 'full_name', 'delivery_address', 'password1', 'password2']
+        fields = ['username', 'email', 'password1', 'password2']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+        }
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
@@ -49,7 +50,6 @@ class UserRegisterForm(UserCreationForm):
     def save(self, commit=True):
         user = super().save(commit=commit)
         if commit:
-            # Обновление или создание профиля пользователя
             profile, created = UserProfile.objects.get_or_create(user=user)
             profile.phone = self.cleaned_data['phone']
             profile.full_name = self.cleaned_data['full_name']
@@ -63,29 +63,8 @@ class UserProfileForm(forms.ModelForm):
     delivery_address = forms.CharField(max_length=255, required=False, label="Адрес доставки")
 
     class Meta:
-        model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'phone', 'full_name', 'delivery_address']
-
-    def __init__(self, *args, **kwargs):
-        # Получаем пользователя из формы
-        user = kwargs.pop('user', None)
-        super(UserProfileForm, self).__init__(*args, **kwargs)
-
-        # Заполняем начальные значения для полей профиля
-        if user:
-            self.fields['phone'].initial = user.profile.phone
-            self.fields['full_name'].initial = user.profile.full_name
-            self.fields['delivery_address'].initial = user.profile.delivery_address
-
-    def save(self, commit=True):
-        user = super().save(commit=commit)
-        # Сохраняем данные в профиль пользователя
-        user.profile.phone = self.cleaned_data['phone']
-        user.profile.full_name = self.cleaned_data['full_name']
-        user.profile.delivery_address = self.cleaned_data['delivery_address']
-        if commit:
-            user.profile.save()
-        return user
+        model = UserProfile
+        fields = ['phone', 'full_name', 'delivery_address']
 
 class UserUpdateForm(forms.ModelForm):
     phone = forms.CharField(max_length=15, required=False, label="Телефон")
@@ -94,14 +73,21 @@ class UserUpdateForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'phone', 'full_name', 'delivery_address']
+        fields = ['username', 'email', 'first_name', 'last_name']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+        }
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.get('instance')
         super().__init__(*args, **kwargs)
-        if self.instance and hasattr(self.instance, 'profile'):
-            self.fields['phone'].initial = self.instance.profile.phone
-            self.fields['full_name'].initial = self.instance.profile.full_name
-            self.fields['delivery_address'].initial = self.instance.profile.delivery_address
+        if user and hasattr(user, 'profile'):
+            self.fields['phone'].initial = user.profile.phone
+            self.fields['full_name'].initial = user.profile.full_name
+            self.fields['delivery_address'].initial = user.profile.delivery_address
 
     def save(self, commit=True):
         user = super().save(commit=commit)
@@ -112,7 +98,6 @@ class UserUpdateForm(forms.ModelForm):
         if commit:
             profile.save()
         return user
-
 
 class ProductForm(forms.ModelForm):
     class Meta:
@@ -126,8 +111,11 @@ class ProductForm(forms.ModelForm):
         }
 
 class AddressForm(forms.Form):
-    address = forms.CharField(max_length=255, label='Адрес',
-                              widget=forms.TextInput(attrs={'placeholder': 'Введите адрес'}))
+    address = forms.CharField(
+        max_length=255,
+        label='Адрес',
+        widget=forms.TextInput(attrs={'placeholder': 'Введите адрес', 'class': 'form-control'})
+    )
 
     def clean_address(self):
         address = self.cleaned_data['address']
@@ -140,12 +128,15 @@ class AddressForm(forms.Form):
             logger.error(f"Ошибка при подключении к DaData: {e}")
             raise forms.ValidationError(_("Не удалось определить адрес. Пожалуйста, проверьте введённые данные."))
         finally:
-            dadata.close()  # Закрываем соединение
+            dadata.close()
 
 class StockUpdateForm(forms.ModelForm):
     class Meta:
         model = Product
         fields = ['stock']
+        widgets = {
+            'stock': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
 
 class SalesReportForm(forms.Form):
     start_date = forms.DateField(
@@ -156,3 +147,19 @@ class SalesReportForm(forms.Form):
         label='Конец периода',
         widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
     )
+
+class ReviewForm(forms.ModelForm):
+    rating = forms.IntegerField(
+        label='Рейтинг',
+        min_value=1,
+        max_value=5,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'required': True})
+    )
+    comment = forms.CharField(
+        label='Комментарий',
+        widget=forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Оставьте ваш отзыв...', 'rows': 5, 'required': True})
+    )
+
+    class Meta:
+        model = Review
+        fields = ['rating', 'comment']
