@@ -3,10 +3,11 @@ import logging
 from telegram import Bot
 from django.conf import settings
 from asgiref.sync import async_to_sync
-from .models import Order, OrderItem, Product
+from .models import Order, Product
 from datetime import datetime, timedelta
 from django.utils import timezone
-
+from .models import Order, OrderItem
+from django.db.models import Sum, Count, F
 
 logger = logging.getLogger(__name__)
 
@@ -34,52 +35,45 @@ async def async_send_message(chat_id, message):
 def send_telegram_message(chat_id, message):
     async_to_sync(async_send_message)(chat_id, message)
 
-from django.db.models import Sum, Count, F
-from django.db.models.functions import TruncDate
 
-def generate_sales_report(start_date=None, end_date=None, days=30):
-    if start_date and end_date:
-        # Проверяем и преобразуем даты с учетом временной зоны
-        if timezone.is_naive(start_date):
-            start_date = timezone.make_aware(start_date)
-        if timezone.is_naive(end_date):
-            end_date = timezone.make_aware(end_date)
-    else:
-        # Используем последние 'days' дней
-        end_date = timezone.now()
-        start_date = end_date - timedelta(days=days)
+def generate_sales_report(start_date=None, end_date=None):
+    orders = Order.objects.filter(status='delivered')
 
-    # Фильтрация заказов
-    orders = Order.objects.filter(created_at__range=(start_date, end_date), status='delivered')
+    if start_date:
+        try:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d')
+            orders = orders.filter(created_at__date__gte=start_date)
+        except ValueError:
+            logger.error(f"Invalid start_date format: {start_date}")
+            start_date = None  # Игнорируем некорректный формат даты
 
-    # Агрегация данных
-    total_sales = orders.aggregate(
-        total_sales=Sum(F('items__quantity') * F('items__product__price'))
-    )['total_sales'] or 0
+    if end_date:
+        try:
+            end_date = datetime.strptime(end_date, '%Y-%m-%d')
+            orders = orders.filter(created_at__date__lte=end_date)
+        except ValueError:
+            logger.error(f"Invalid end_date format: {end_date}")
+            end_date = None  # Игнорируем некорректный формат даты
 
+    total_sales = orders.aggregate(total=Sum(F('items__quantity') * F('items__product__price')))['total'] or 0
     total_orders = orders.count()
     total_customers = orders.values('user').distinct().count()
 
-    # Продажи по дням
-    daily_sales = orders.annotate(date=TruncDate('created_at')).values('date').annotate(
-        total_sales=Sum(F('items__quantity') * F('items__product__price'))
-    ).order_by('date')
+    # Подготовка данных для графика
+    sales_data = orders.annotate(date_only=F('created_at__date')).values('date_only').annotate(
+        total=Sum(F('items__quantity') * F('items__product__price'))
+    ).order_by('date_only')
 
-    # Топ продаваемых товаров
-    top_products = OrderItem.objects.filter(
-        order__in=orders
-    ).values('product__name').annotate(
-        total_quantity=Sum('quantity')
-    ).order_by('-total_quantity')[:10]
-
-    return {
+    report = {
         'total_sales': total_sales,
         'total_orders': total_orders,
         'total_customers': total_customers,
-        'daily_sales': list(daily_sales),
-        'top_products': list(top_products),
+        'sales_data': list(sales_data),
     }
 
+    logger.debug(f"Report Data: {report}")  # Отладка
+
+    return report
 
 
 def generate_sales_report_by_period(start_date=None, end_date=None, days=None):
