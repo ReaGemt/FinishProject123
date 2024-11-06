@@ -45,9 +45,9 @@
                 {% for i in "12345" %}
                     {% with star_value=forloop.counter %}
                         <img src="{% if star_value <= review.rating %}
-                                     {% static 'images/flower-filled.png' %}
+                                     {% static 'images/tulpan/flower-filled.png' %}
                                  {% else %}
-                                     {% static 'images/flower-empty.png' %}
+                                     {% static 'images/tulpan/flower-empty.png' %}
                                  {% endif %}"
                              alt="Цветочек"
                              class="flower-icon">

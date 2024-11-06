@@ -34,9 +34,9 @@
                                             {% for i in "12345" %}
                                                 {% with star_value=forloop.counter %}
                                                     <img src="{% if star_value <= product.current_rating|default:0 %}
-                                                                 {% static 'images/flower-filled.png' %}
+                                                                 {% static 'images/tulpan/flower-filled.png' %}
                                                              {% else %}
-                                                                 {% static 'images/flower-empty.png' %}
+                                                                 {% static 'images/tulpan/flower-empty.png' %}
                                                              {% endif %}"
                                                          alt="Цветочек"
                                                          data-value="{{ star_value }}"
@@ -207,8 +207,8 @@
 <!-- Скрипт для управления рейтингом -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const emptyFlowerSrc = "{% static 'images/flower-empty.png' %}";
-    const filledFlowerSrc = "{% static 'images/flower-filled.png' %}";
+    const emptyFlowerSrc = "{% static 'images/tulpan/flower-empty.png' %}";
+    const filledFlowerSrc = "{% static 'images/tulpan/flower-filled.png' %}";
 
     const ratingContainers = document.querySelectorAll(".rating");
 
